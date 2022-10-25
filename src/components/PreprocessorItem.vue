@@ -1,53 +1,93 @@
 <script setup lang="ts">
-import { NInput, NDynamicInput } from "naive-ui";
+import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem } from "naive-ui";
 import { store } from "@/store";
 import type { Xs, Xc, Qr, Qs } from "@/store";
 import { ref } from "vue";
 
-const xr = ref<number[]>([]);
-const xs = ref<Xs[]>([]);
-const xc = ref<Xc[]>([]);
-const nb = ref<number[]>([]);
-const qr = ref<Qr[]>([]);
-const qs = ref<Qs[]>([]);
+interface Form {
+  xr: number[];
+  xs: Xs[];
+  xc: Xc[];
+  nb: number[];
+  qr: Qr[];
+  qs: Qs[];
+}
+
+const formValue = ref<Form>({
+  xr: [],
+  xs: [],
+  xc: [],
+  nb: [],
+  qr: [],
+  qs: [],
+});
 </script>
 
 <template>
-  <div>
+  <div style="display: flex; flex-direction: column; gap: 3rem">
     <h3>Препроцессор</h3>
-    <div>
-      <div style="margin-bottom: 5rem">
+    <n-form :model="formValue" style="display: flex; flex-direction: column; gap: 1rem">
+      <div>
         <h3>Стержни и узлы (CN)</h3>
         <div>
           <div>
-            <div>xr</div>
-            <n-dynamic-input v-model:value="xr" placeholder="X">
+            <div>Узлы (XR)</div>
+            <n-dynamic-input v-model:value="formValue.xr" placeholder="X">
               <template #create-button-default> Добавить узлы </template>
+              <template #default="{ index: index }">
+                <n-form-item :show-feedback="false" :show-label="false" path="">
+                  <n-input-number
+                    v-model:value="formValue.xr[index]"
+                    :precision="2"
+                    placeholder="Fx"
+                    :show-button="false"
+                  />
+                </n-form-item>
+              </template>
             </n-dynamic-input>
           </div>
           <div>
-            <div>xs</div>
-            <n-dynamic-input v-model:value="xs" @create="() => ({})">
+            <div>Стержни (XS)</div>
+            <n-dynamic-input v-model:value="formValue.xs" @create="() => ({})">
               <template #create-button-default> Добавить стержни </template>
               <template #default="{ value }">
                 <div style="display: flex; gap: 1rem">
-                  <n-input v-model:value="value.I" type="text" placeholder="I" />
-                  <n-input v-model:value="value.J" type="text" placeholder="J" />
-                  <n-input v-model:value="value.Ig" type="text" placeholder="Ig" />
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.I" :precision="2" placeholder="I" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.J" :precision="2" placeholder="J" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.Ig" :precision="2" placeholder="Ig" :show-button="false" />
+                  </n-form-item>
                 </div>
               </template>
             </n-dynamic-input>
           </div>
           <div>
-            <div>xc</div>
-            <n-dynamic-input v-model:value="xc" @create="() => ({})">
+            <div>Классы стержней (XC)</div>
+            <n-dynamic-input v-model:value="formValue.xc" @create="() => ({})">
               <template #create-button-default> Добавить классы стержней </template>
               <template #default="{ value }">
                 <div style="display: flex; gap: 1rem">
-                  <n-input v-model:value="value.L" type="text" placeholder="L" />
-                  <n-input v-model:value="value.A" type="text" placeholder="A" />
-                  <n-input v-model:value="value.E" type="text" placeholder="E" />
-                  <n-input v-model:value="value.S" type="text" placeholder="S" />
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.L" :precision="2" placeholder="L" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.A" :precision="2" placeholder="A" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.E" :precision="2" placeholder="E" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number
+                      v-model:value="value.S"
+                      :precision="2"
+                      placeholder="[&#x03c3;]"
+                      :show-button="false"
+                    />
+                  </n-form-item>
                 </div>
               </template>
             </n-dynamic-input>
@@ -58,37 +98,58 @@ const qs = ref<Qs[]>([]);
         <h3>Опоры и силы (LD)</h3>
         <div>
           <div>
-            <div>nb</div>
-            <n-dynamic-input v-model:value="nb" placeholder="I">
+            <div>Жесткие опоры (NB)</div>
+            <n-dynamic-input v-model:value="formValue.nb" placeholder="I">
               <template #create-button-default> Добавить жесткие опоры </template>
+              <template #default="{ index: index }">
+                <n-form-item :show-feedback="false" :show-label="false" path="">
+                  <n-input-number
+                    v-model:value="formValue.nb[index]"
+                    :precision="2"
+                    placeholder="Fx"
+                    :show-button="false"
+                  />
+                </n-form-item>
+              </template>
             </n-dynamic-input>
           </div>
           <div>
-            <div>qr</div>
-            <n-dynamic-input v-model:value="qr" @create="() => ({})">
+            <div>Сосредоточенные силы (QR)</div>
+            <n-dynamic-input v-model:value="formValue.qr" @create="() => ({})">
               <template #create-button-default> Добавить сосредоточенные силы </template>
               <template #default="{ value }">
                 <div style="display: flex; gap: 1rem">
-                  <n-input v-model:value="value.I" type="text" placeholder="I" />
-                  <n-input v-model:value="value.Fx" type="text" placeholder="Fx" />
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.I" :precision="2" placeholder="I" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.Fx" :precision="2" placeholder="Fx" :show-button="false" />
+                  </n-form-item>
                 </div>
               </template>
             </n-dynamic-input>
           </div>
           <div>
-            <div>qs</div>
-            <n-dynamic-input v-model:value="qs" @create="() => ({})">
+            <div>Распределенные нагрузки (QS)</div>
+            <n-dynamic-input v-model:value="formValue.qs" @create="() => ({})">
               <template #create-button-default> Добавить распределенные нагрузки </template>
               <template #default="{ value }">
                 <div style="display: flex; gap: 1rem">
-                  <n-input v-model:value="value.I" type="text" placeholder="I" />
-                  <n-input v-model:value="value.Qx" type="text" placeholder="Qx" />
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.I" :precision="2" placeholder="I" :show-button="false" />
+                  </n-form-item>
+                  <n-form-item :show-feedback="false" :show-label="false" path="">
+                    <n-input-number v-model:value="value.Qx" :precision="2" placeholder="Qx" :show-button="false" />
+                  </n-form-item>
                 </div>
               </template>
             </n-dynamic-input>
           </div>
         </div>
       </div>
+    </n-form>
+    <div>
+      <n-button tertiary>Проверить данные</n-button>
     </div>
   </div>
 </template>
