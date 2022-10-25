@@ -1,15 +1,38 @@
 import { reactive } from "vue";
 
-interface Store {
+export interface Xs {
+  I: number;
+  J: number;
+  Ig: number;
+}
+
+export interface Xc {
+  L: number;
+  A: number;
+  E: number;
+  S: number;
+}
+
+export interface Qr {
+  I: number;
+  Fx: number;
+}
+
+export interface Qs {
+  I: number;
+  Qx: number;
+}
+
+export interface Store {
   cn: {
-    xr: Array<number[]>;
-    xs: Array<number[]>;
-    xc: Array<number[]>;
+    xr: number[];
+    xs: Xs[];
+    xc: Xc[];
   };
   ld: {
-    nb: Array<number[]>;
-    qr: Array<number[]>;
-    qs: Array<number[]>;
+    nb: number[];
+    qr: Qr[];
+    qs: Qs[];
   };
 }
 
