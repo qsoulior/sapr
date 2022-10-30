@@ -3,6 +3,10 @@ import { ref } from "vue";
 import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
 import { Bar, type Form, type Xs } from "@/store";
 
+const emit = defineEmits<{
+  (e: "validate", bars: Bar[]): void;
+}>();
+
 const formRef = ref<FormInst | null>(null);
 
 const formValue = ref<Form>({
@@ -59,10 +63,11 @@ const xcNumberRule: FormItemRule = {
   trigger: ["blur"],
 };
 
-async function validate(): Promise<Bar[]> {
+async function validate() {
   if (formValue.value.xr.length === 0) throw new Error("xr is empty");
   await formRef.value?.validate();
-  return formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
+  const bars = formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
+  emit("validate", bars);
 }
 
 defineExpose({
@@ -247,7 +252,8 @@ defineExpose({
       </div>
     </n-form>
     <div>
-      <n-button tertiary @click.prevent="validate">Проверить данные</n-button>
+      <n-button tertiary @click.prevent="validate">Отрисовать стержневую систему</n-button>
+      <n-button tertiary @click.prevent="validate">Сохранить файл</n-button>
     </div>
   </div>
 </template>
