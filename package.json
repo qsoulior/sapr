@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@svgdotjs/svg.js": "^3.1.2",
     "naive-ui": "^2.33.5",
     "vfonts": "^0.0.3",
     "vue": "^3.2.41"
