@@ -46,15 +46,15 @@ export class Node {
 }
 
 export class Bar {
-  I: Node;
-  J: Node;
+  I: number;
+  J: number;
   Ig: Xc;
   Qx: number[];
 
   constructor(index: number, form: Form) {
     const item = form.xs[index];
-    this.I = new Node(item.I - 1, form);
-    this.J = new Node(item.J - 1, form);
+    this.I = item.I - 1;
+    this.J = item.J - 1;
     this.Ig = form.xc[item.Ig - 1];
     this.Qx = form.qs.filter((value) => value.I === index + 1).map((value) => value.Qx);
   }

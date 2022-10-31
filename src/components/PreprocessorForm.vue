@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
-import { Bar, type Form, type Xs } from "@/store";
+import { Bar, Node, type Form, type Xs } from "@/store";
 
 const emit = defineEmits<{
-  (e: "validate", bars: Bar[]): void;
+  (e: "validate", nodes: Node[], bars: Bar[]): void;
 }>();
 
 const formRef = ref<FormInst | null>(null);
@@ -19,8 +19,9 @@ const formValue = ref<Form>({
     { A: 2, E: 5, S: 5 },
     { A: 3, E: 5, S: 5 },
   ],
-  nb: [3],
+  nb: [1, 3],
   qr: [
+    { I: 1, Fx: -20 },
     { I: 2, Fx: -50 },
     { I: 3, Fx: 20 },
   ],
@@ -66,8 +67,9 @@ const xcNumberRule: FormItemRule = {
 async function validate() {
   if (formValue.value.xr.length === 0) throw new Error("xr is empty");
   await formRef.value?.validate();
+  const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value));
   const bars = formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
-  emit("validate", bars);
+  emit("validate", nodes, bars);
 }
 
 defineExpose({

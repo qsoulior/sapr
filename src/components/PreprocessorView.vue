@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { NButton } from "naive-ui";
-import { SVG, type Svg, type G } from "@svgdotjs/svg.js";
-import type { Bar } from "@/store";
+import { SVG, type G, Container, Box } from "@svgdotjs/svg.js";
+import type { Bar, Node } from "@/store";
 
 const props = defineProps<{
+  nodes: Node[];
   bars: Bar[];
 }>();
 
@@ -12,7 +13,7 @@ const emit = defineEmits<{
   (e: "back"): void;
 }>();
 
-async function arrow(svg: Svg | G, fromX: number, fromY: number, toX: number, toY: number): Promise<G> {
+async function arrow(svg: Container, fromX: number, fromY: number, toX: number, toY: number): Promise<G> {
   const arrow = svg.group();
   const headLen = 10;
   const angle = Math.atan2(toY - fromY, toX - fromX);
@@ -27,7 +28,7 @@ async function arrow(svg: Svg | G, fromX: number, fromY: number, toX: number, to
   return arrow;
 }
 
-async function concentratedLoad(svg: Svg | G, x: number, y: number, reversed = false): Promise<G> {
+async function concentratedLoad(svg: Container, x: number, y: number, reversed = false): Promise<G> {
   const loadLen = kiw / 2;
   const loadWidth = kih / 10;
 
@@ -35,7 +36,7 @@ async function concentratedLoad(svg: Svg | G, x: number, y: number, reversed = f
   return (await arrow(svg, fromX, y, toX, y)).stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
 }
 
-async function distributedLoad(svg: Svg | G, fromX: number, toX: number, y: number): Promise<G> {
+async function distributedLoad(svg: Container, fromX: number, toX: number, y: number): Promise<G> {
   const arrows = svg.group();
   let reversed = false;
   if (toX < fromX) {
@@ -54,7 +55,14 @@ async function distributedLoad(svg: Svg | G, fromX: number, toX: number, y: numb
   return arrows.stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
 }
 
-async function support(svg: Svg | G, x: number, fromY: number, toY: number, reversed = false): Promise<G> {
+async function support(
+  svg: Container,
+  x: number,
+  fromY: number,
+  toY: number,
+  reversed = false,
+  color: string
+): Promise<G> {
   const support = svg.group();
   const space = kih / 3;
   const head = reversed ? -space : space;
@@ -62,48 +70,80 @@ async function support(svg: Svg | G, x: number, fromY: number, toY: number, reve
   for (let i = fromY; Math.floor(i) <= Math.ceil(toY); i += space) {
     support.line(x, i, x + head, i - head);
   }
-  return support;
+  return support.stroke(color);
+}
+
+async function number(
+  svg: Container,
+  text: string,
+  x: number,
+  y: number,
+  type: "bar" | "node",
+  color: string
+): Promise<G> {
+  const group = svg.group();
+
+  const figure =
+    type === "node"
+      ? group.rect(kiw / 5, kiw / 5).attr({ stroke: color, fill: "transparent" })
+      : group.circle(kiw / 5).stroke(color);
+  figure.cx(x);
+  figure.y(y);
+
+  const nodeText = group
+    .text(text)
+    .font({ size: kiw / 6 })
+    .fill(color);
+  nodeText.cx(x);
+  nodeText.cy(figure.cy());
+
+  return group;
 }
 
 async function render(kw: number, kh: number) {
   if (container.value === null) return;
   container.value.innerHTML = "";
   const draw = SVG().addTo(container.value).size(container.value.clientWidth, container.value.clientHeight);
-  const padding = kih / 3;
+  const padding = kiw / 2;
   const barColor = "#b0b0b0";
 
-  const usedNodes = new Set<number>();
-  for (const bar of props.bars) {
-    const rect = draw
-      .rect(Math.abs(bar.J.x - bar.I.x) * kw, bar.Ig.A * kh)
-      .attr({ stroke: barColor, fill: "transparent" });
-    rect.x((bar.I.x < bar.J.x ? bar.I.x : bar.J.x) * kw + padding);
+  const boxes = new Array<Box>(props.nodes.length);
+  const addBox = async (index: number, value: Box) => {
+    if ((boxes[index] !== undefined && boxes[index].height < value.height) || boxes[index] === undefined) {
+      boxes[index] = value;
+    }
+  };
+
+  for (const [index, value] of props.bars.entries()) {
+    const [I, J] = [props.nodes[value.I], props.nodes[value.J]];
+
+    const rect = draw.rect(Math.abs(J.x - I.x) * kw, value.Ig.A * kh).attr({ stroke: barColor, fill: "transparent" });
+    rect.x((I.x < J.x ? I.x : J.x) * kw + padding);
     rect.cy(draw.cy());
 
-    for (const q of bar.Qx) {
+    for (const q of value.Qx) {
       const [x1, x2] = q < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
       await distributedLoad(draw, x1, x2, rect.bbox().cy);
     }
+    await number(draw, (index + 1).toString(), rect.bbox().cx, rect.bbox().y2 + 10, "bar", barColor);
 
-    if (!usedNodes.has(bar.I.x)) {
-      for (const f of bar.I.Fx) {
-        await concentratedLoad(draw, rect.bbox().x, rect.bbox().cy, f < 0);
-      }
-      if (bar.I.Nb) {
-        (await support(draw, rect.bbox().x, rect.bbox().y, rect.bbox().y2, true)).stroke(barColor);
-      }
-      usedNodes.add(bar.I.x);
+    await addBox(value.I, rect.bbox());
+    await addBox(value.J, rect.bbox());
+  }
+
+  for (const [index, value] of props.nodes.entries()) {
+    const pos = value.x * kw + padding;
+    const box = boxes[index];
+
+    for (const load of value.Fx) {
+      await concentratedLoad(draw, pos, box.cy, load < 0);
     }
 
-    if (!usedNodes.has(bar.J.x)) {
-      for (const f of bar.J.Fx) {
-        await concentratedLoad(draw, rect.bbox().x2, rect.bbox().cy, f < 0);
-      }
-      if (bar.J.Nb) {
-        (await support(draw, rect.bbox().x2, rect.bbox().y, rect.bbox().y2)).stroke(barColor);
-      }
-      usedNodes.add(bar.J.x);
+    if (value.Nb) {
+      await support(draw, pos, box.y, box.y2, index !== boxes.length - 1, barColor);
     }
+
+    await number(draw, (index + 1).toString(), pos, box.y2 + 10, "node", "#f06");
   }
 }
 

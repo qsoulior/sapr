@@ -2,12 +2,14 @@
 import { ref } from "vue";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
-import type { Bar } from "@/store";
+import type { Bar, Node } from "@/store";
 const isShow = ref(false);
 
+const formNodes = ref<Node[]>([]);
 const formBars = ref<Bar[]>([]);
 
-function handleValidate(bars: Bar[]) {
+function handleValidate(nodes: Node[], bars: Bar[]) {
+  formNodes.value = nodes;
   formBars.value = bars;
   isShow.value = true;
 }
@@ -16,7 +18,7 @@ function handleValidate(bars: Bar[]) {
 <template>
   <div>
     <h3>Препроцессор</h3>
-    <preprocessor-view v-if="isShow" :bars="formBars" @back="isShow = false" />
+    <preprocessor-view v-if="isShow" :nodes="formNodes" :bars="formBars" @back="isShow = false" />
     <preprocessor-form v-else @validate="handleValidate" />
   </div>
 </template>
