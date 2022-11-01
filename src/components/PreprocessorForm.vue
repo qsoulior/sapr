@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
+import {
+  NDynamicInput,
+  NButton,
+  NUpload,
+  NInputNumber,
+  NForm,
+  NFormItem,
+  type FormItemRule,
+  type FormInst,
+  type UploadFileInfo,
+  type UploadCustomRequestOptions,
+} from "naive-ui";
 import { Bar, Node, type Form, type Xs } from "@/store";
 
 const emit = defineEmits<{
@@ -10,22 +21,12 @@ const emit = defineEmits<{
 const formRef = ref<FormInst | null>(null);
 
 const formValue = ref<Form>({
-  xr: [0, 3, 7],
-  xs: [
-    { I: 1, J: 2, Ig: 1 },
-    { I: 2, J: 3, Ig: 2 },
-  ],
-  xc: [
-    { A: 2, E: 5, S: 5 },
-    { A: 3, E: 5, S: 5 },
-  ],
-  nb: [1, 3],
-  qr: [
-    { I: 1, Fx: -20 },
-    { I: 2, Fx: -50 },
-    { I: 3, Fx: 20 },
-  ],
-  qs: [{ I: 1, Qx: 30 }],
+  xr: [],
+  xs: [],
+  xc: [],
+  nb: [],
+  qr: [],
+  qs: [],
 });
 
 const requiredRule: FormItemRule = {
@@ -72,9 +73,71 @@ async function validate() {
   emit("validate", nodes, bars);
 }
 
+async function saveForm() {
+  const blob = new Blob([JSON.stringify(formValue.value)], { type: "application/json" });
+  const anchor = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  anchor.href = url;
+  anchor.download = "form.json";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
 defineExpose({
   validate,
 });
+
+async function handleBeforeUpload({ file }: { file: UploadFileInfo }) {
+  if (file.file === null || file.file === undefined) return false;
+  if (file.file.size > 10 * 1024 * 1024) {
+    return false;
+  }
+  if (file.file.name.length > 100) {
+    return false;
+  }
+  if (file.file.type !== "application/json") {
+    return false;
+  }
+  return true;
+}
+
+async function handleCustomRequest({ file, onFinish, onError, onProgress }: UploadCustomRequestOptions) {
+  if (file.file === null) {
+    onError();
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      const percent = Math.round((ev.loaded / ev.total) * 100);
+      onProgress({ percent });
+    }
+  };
+  reader.onload = () => {
+    if (typeof reader.result !== "string") {
+      onError();
+    } else {
+      try {
+        const result: Form = JSON.parse(reader.result);
+        formValue.value = result;
+        onFinish();
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          onError();
+        }
+      }
+    }
+  };
+  reader.onerror = () => {
+    onError();
+  };
+
+  reader.readAsText(file.file);
+}
 </script>
 
 <template>
@@ -255,7 +318,15 @@ defineExpose({
     </n-form>
     <div>
       <n-button tertiary @click.prevent="validate">Отрисовать стержневую систему</n-button>
-      <n-button tertiary @click.prevent="validate">Сохранить файл</n-button>
+      <n-button tertiary @click.prevent="saveForm">Сохранить файл</n-button>
+      <n-upload
+        accept="application/json"
+        :max="1"
+        @before-upload="handleBeforeUpload"
+        :custom-request="handleCustomRequest"
+      >
+        <n-button tertiary>Открыть файл</n-button>
+      </n-upload>
     </div>
   </div>
 </template>
