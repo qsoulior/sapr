@@ -1,18 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import {
-  NDynamicInput,
-  NButton,
-  NUpload,
-  NInputNumber,
-  NForm,
-  NFormItem,
-  type FormItemRule,
-  type FormInst,
-  type UploadFileInfo,
-  type UploadCustomRequestOptions,
-} from "naive-ui";
+import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
 import { Bar, Node, type Form, type Xs } from "@/store";
+import PreprocessorStore from "@/components/PreprocessorStore.vue";
 
 const emit = defineEmits<{
   (e: "validate", nodes: Node[], bars: Bar[]): void;
@@ -65,82 +55,38 @@ const xcNumberRule: FormItemRule = {
   trigger: ["blur"],
 };
 
-async function validate() {
-  if (formValue.value.xr.length === 0) throw new Error("xr is empty");
+const qrExistsRule: FormItemRule = {
+  validator: (rule: FormItemRule, value: number) => formValue.value.qr.filter((q) => q.I == value).length <= 1,
+  message: "В узле уже есть силы",
+  trigger: ["blur"],
+};
+
+const qsExistsRule: FormItemRule = {
+  validator: (rule: FormItemRule, value: number) => formValue.value.qs.filter((q) => q.I == value).length <= 1,
+  message: "На стержне уже есть нагрузки",
+  trigger: ["blur"],
+};
+
+const storeRef = ref<InstanceType<typeof PreprocessorStore> | null>(null);
+
+async function validate(): Promise<void> {
+  if (formValue.value.xr.length === 0) throw new Error("Конструкция должна содержать хотя бы 2 узла");
+  if (formValue.value.nb.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 стержень");
+  if (formValue.value.xr.length - 1 > formValue.value.xs.length)
+    throw new Error("Конструкция содержит незадействованные узлы");
   await formRef.value?.validate();
   const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value));
   const bars = formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
+
+  await storeRef.value?.saveLocal();
   emit("validate", nodes, bars);
-}
-
-async function saveForm() {
-  const blob = new Blob([JSON.stringify(formValue.value)], { type: "application/json" });
-  const anchor = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  anchor.href = url;
-  anchor.download = "form.json";
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
-}
-
-defineExpose({
-  validate,
-});
-
-async function handleBeforeUpload({ file }: { file: UploadFileInfo }) {
-  if (file.file === null || file.file === undefined) return false;
-  if (file.file.size > 10 * 1024 * 1024) {
-    return false;
-  }
-  if (file.file.name.length > 100) {
-    return false;
-  }
-  if (file.file.type !== "application/json") {
-    return false;
-  }
-  return true;
-}
-
-async function handleCustomRequest({ file, onFinish, onError, onProgress }: UploadCustomRequestOptions) {
-  if (file.file === null) {
-    onError();
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onprogress = (ev) => {
-    if (ev.lengthComputable) {
-      const percent = Math.round((ev.loaded / ev.total) * 100);
-      onProgress({ percent });
-    }
-  };
-  reader.onload = () => {
-    if (typeof reader.result !== "string") {
-      onError();
-    } else {
-      try {
-        const result: Form = JSON.parse(reader.result);
-        formValue.value = result;
-        onFinish();
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          onError();
-        }
-      }
-    }
-  };
-  reader.onerror = () => {
-    onError();
-  };
-
-  reader.readAsText(file.file);
 }
 </script>
 
 <template>
+  <div>
+    <preprocessor-store ref="storeRef" v-model:form="formValue" />
+  </div>
   <div style="display: flex; flex-direction: column; gap: 3rem">
     <n-form
       ref="formRef"
@@ -150,11 +96,11 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
       style="display: flex; flex-direction: column; gap: 1rem"
     >
       <div>
-        <h3>Стержни и узлы (CN)</h3>
+        <h3>Узлы и стержни</h3>
         <div style="display: flex; flex-direction: column; gap: 1rem">
           <div>
-            <div>Узлы (XR)</div>
-            <n-dynamic-input v-model:value="formValue.xr" item-style="margin-bottom: 0;">
+            <div>Узлы</div>
+            <n-dynamic-input v-model:value="formValue.xr" :min="2" item-style="margin-bottom: 0;">
               <template #create-button-default> Добавить узлы </template>
               <template #default="{ index: index }">
                 <n-form-item
@@ -175,8 +121,8 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
             </n-dynamic-input>
           </div>
           <div>
-            <div>Стержни (XS)</div>
-            <n-dynamic-input v-model:value="formValue.xs" @create="() => ({})" item-style="margin-bottom: 0;">
+            <div>Стержни</div>
+            <n-dynamic-input v-model:value="formValue.xs" :min="1" @create="() => ({})" item-style="margin-bottom: 0;">
               <template #create-button-default> Добавить стержни </template>
               <template #default="{ value, index }">
                 <div style="display: flex; gap: 1rem">
@@ -213,7 +159,7 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
           </div>
           <div>
             <div>Классы стержней (XC)</div>
-            <n-dynamic-input v-model:value="formValue.xc" @create="() => ({})">
+            <n-dynamic-input v-model:value="formValue.xc" :min="1" @create="() => ({})">
               <template #create-button-default> Добавить классы стержней </template>
               <template #default="{ value, index }">
                 <div style="display: flex; gap: 1rem">
@@ -251,11 +197,11 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
         </div>
       </div>
       <div>
-        <h3>Опоры и силы (LD)</h3>
+        <h3>Опоры, силы и нагрузки</h3>
         <div style="display: flex; flex-direction: column; gap: 1rem">
           <div>
-            <div>Жесткие опоры (NB)</div>
-            <n-dynamic-input v-model:value="formValue.nb">
+            <div>Жесткие опоры</div>
+            <n-dynamic-input v-model:value="formValue.nb" :min="1">
               <template #create-button-default> Добавить жесткие опоры </template>
               <template #default="{ index: index }">
                 <n-form-item
@@ -270,7 +216,7 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
             </n-dynamic-input>
           </div>
           <div>
-            <div>Сосредоточенные силы (QR)</div>
+            <div>Сосредоточенные силы</div>
             <n-dynamic-input v-model:value="formValue.qr" @create="() => ({})">
               <template #create-button-default> Добавить сосредоточенные силы </template>
               <template #default="{ value, index }">
@@ -280,7 +226,7 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
                     first
                     :label="`${index + 1}`"
                     :path="`qr[${index}].I`"
-                    :rule="[requiredRule, xrNumberRule]"
+                    :rule="[requiredRule, xrNumberRule, qrExistsRule]"
                   >
                     <n-input-number v-model:value="value.I" :min="1" placeholder="I" :show-button="false" />
                   </n-form-item>
@@ -292,7 +238,7 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
             </n-dynamic-input>
           </div>
           <div>
-            <div>Распределенные нагрузки (QS)</div>
+            <div>Распределенные нагрузки</div>
             <n-dynamic-input v-model:value="formValue.qs" @create="() => ({})">
               <template #create-button-default> Добавить распределенные нагрузки </template>
               <template #default="{ value, index }">
@@ -302,7 +248,7 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
                     first
                     :label="`${index + 1}`"
                     :path="`qs[${index}].I`"
-                    :rule="[requiredRule, xsNumberRule]"
+                    :rule="[requiredRule, xsNumberRule, qsExistsRule]"
                   >
                     <n-input-number v-model:value="value.I" :min="1" placeholder="I" :show-button="false" />
                   </n-form-item>
@@ -317,16 +263,10 @@ async function handleCustomRequest({ file, onFinish, onError, onProgress }: Uplo
       </div>
     </n-form>
     <div>
-      <n-button tertiary @click.prevent="validate">Отрисовать стержневую систему</n-button>
-      <n-button tertiary @click.prevent="saveForm">Сохранить файл</n-button>
-      <n-upload
-        accept="application/json"
-        :max="1"
-        @before-upload="handleBeforeUpload"
-        :custom-request="handleCustomRequest"
-      >
-        <n-button tertiary>Открыть файл</n-button>
-      </n-upload>
+      <div style="display: flex; gap: 1rem">
+        <n-button tertiary @click.prevent="validate">Отрисовать стержневую систему</n-button>
+        <n-button tertiary @click="storeRef?.clearLocal">Очистить</n-button>
+      </div>
     </div>
   </div>
 </template>
