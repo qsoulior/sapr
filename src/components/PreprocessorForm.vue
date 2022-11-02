@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { NDynamicInput, NButton, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
+import {
+  NDynamicInput,
+  NButton,
+  NInputNumber,
+  NForm,
+  NFormItem,
+  useMessage,
+  type FormItemRule,
+  type FormInst,
+} from "naive-ui";
 import { Bar, Node, type Form, type Xs } from "@/store";
 import PreprocessorStore from "@/components/PreprocessorStore.vue";
 
 const emit = defineEmits<{
   (e: "validate", nodes: Node[], bars: Bar[]): void;
 }>();
+
+const message = useMessage();
 
 const formRef = ref<FormInst | null>(null);
 
@@ -79,18 +90,38 @@ async function getXsBound(xr: number[], xs: Xs[]) {
 }
 
 async function validate(): Promise<void> {
-  await formRef.value?.validate();
+  try {
+    await formRef.value?.validate();
+  } catch (e) {
+    message.error("Данные заданы неверно");
+    return;
+  }
 
-  if (formValue.value.xr.length < 2) throw new Error("Конструкция должна содержать хотя бы 2 узла");
-  if (formValue.value.xs.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 стержень");
-  if (formValue.value.nb.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 опору");
-  if (formValue.value.xr.length - 1 > formValue.value.xs.length)
-    throw new Error("Конструкция содержит незадействованные узлы");
+  if (formValue.value.xr.length < 2) {
+    message.error("Конструкция должна содержать хотя бы 2 узла");
+    return;
+  }
+  if (formValue.value.xs.length === 0) {
+    message.error("Конструкция должна содержать хотя бы 1 стержень");
+    return;
+  }
+  if (formValue.value.nb.length === 0) {
+    message.error("Конструкция должна содержать хотя бы 1 опору");
+    return;
+  }
+
+  if (formValue.value.xr.length - 1 > formValue.value.xs.length) {
+    message.error("Конструкция содержит незадействованные узлы");
+    return;
+  }
 
   const xsBound = await getXsBound(formValue.value.xr, formValue.value.xs);
   xsBound.sort((a, b) => a.x1 - b.x1);
   for (let i = 1; i < xsBound.length; i++) {
-    if (xsBound[i].x1 !== xsBound[i - 1].x2) throw new Error("Конструкция задана неправильно");
+    if (xsBound[i].x1 !== xsBound[i - 1].x2) {
+      message.error("Конструкция задана неправильно");
+      return;
+    }
   }
 
   const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value));

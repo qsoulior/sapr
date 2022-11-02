@@ -3,6 +3,7 @@ import { ref } from "vue";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
 import type { Bar, Node } from "@/store";
+
 const isShow = ref(false);
 
 const formNodes = ref<Node[]>([]);
