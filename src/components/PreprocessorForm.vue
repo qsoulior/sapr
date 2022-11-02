@@ -25,6 +25,8 @@ const requiredRule: FormItemRule = {
   message: "Пустое поле",
 };
 
+const positiveValidator = (value: number) => value > 0;
+
 const xrExistsRule: FormItemRule = {
   validator: (rule: FormItemRule, value: number) => formValue.value.xr.filter((x) => x == value).length <= 1,
   message: "Такой узел уже существует",
@@ -45,7 +47,7 @@ const xsNumberRule: FormItemRule = {
 
 const xsLengthRule = (xs: Xs): FormItemRule => ({
   validator: (rule: FormItemRule, value: number) => value != xs.I,
-  message: "Длина стержня = 0",
+  message: "Длина стержня равна 0",
   trigger: ["blur"],
 });
 
@@ -69,12 +71,28 @@ const qsExistsRule: FormItemRule = {
 
 const storeRef = ref<InstanceType<typeof PreprocessorStore> | null>(null);
 
+async function getXsBound(xr: number[], xs: Xs[]) {
+  return xs.map((value) => {
+    const [I, J] = [xr[value.I - 1], xr[value.J - 1]];
+    return I < J ? { x1: I, x2: J } : { x1: J, x2: I };
+  });
+}
+
 async function validate(): Promise<void> {
-  if (formValue.value.xr.length === 0) throw new Error("Конструкция должна содержать хотя бы 2 узла");
-  if (formValue.value.nb.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 стержень");
+  await formRef.value?.validate();
+
+  if (formValue.value.xr.length < 2) throw new Error("Конструкция должна содержать хотя бы 2 узла");
+  if (formValue.value.xs.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 стержень");
+  if (formValue.value.nb.length === 0) throw new Error("Конструкция должна содержать хотя бы 1 опору");
   if (formValue.value.xr.length - 1 > formValue.value.xs.length)
     throw new Error("Конструкция содержит незадействованные узлы");
-  await formRef.value?.validate();
+
+  const xsBound = await getXsBound(formValue.value.xr, formValue.value.xs);
+  xsBound.sort((a, b) => a.x1 - b.x1);
+  for (let i = 1; i < xsBound.length; i++) {
+    if (xsBound[i].x1 !== xsBound[i - 1].x2) throw new Error("Конструкция задана неправильно");
+  }
+
   const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value));
   const bars = formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
 
@@ -133,7 +151,13 @@ async function validate(): Promise<void> {
                     :path="`xs[${index}].I`"
                     :rule="[requiredRule, xrNumberRule]"
                   >
-                    <n-input-number v-model:value="value.I" :min="1" placeholder="I" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.I"
+                      :precision="0"
+                      :min="1"
+                      placeholder="I"
+                      :show-button="false"
+                    />
                   </n-form-item>
                   <n-form-item
                     ignore-path-change
@@ -142,7 +166,13 @@ async function validate(): Promise<void> {
                     :path="`xs[${index}].J`"
                     :rule="[requiredRule, xrNumberRule, xsLengthRule(value)]"
                   >
-                    <n-input-number v-model:value="value.J" :min="1" placeholder="J" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.J"
+                      :precision="0"
+                      :min="1"
+                      placeholder="J"
+                      :show-button="false"
+                    />
                   </n-form-item>
                   <n-form-item
                     ignore-path-change
@@ -151,14 +181,20 @@ async function validate(): Promise<void> {
                     :path="`xs[${index}].Ig`"
                     :rule="[requiredRule, xcNumberRule]"
                   >
-                    <n-input-number v-model:value="value.Ig" :min="1" placeholder="Ig" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.Ig"
+                      :precision="0"
+                      :min="1"
+                      placeholder="Ig"
+                      :show-button="false"
+                    />
                   </n-form-item>
                 </div>
               </template>
             </n-dynamic-input>
           </div>
           <div>
-            <div>Классы стержней (XC)</div>
+            <div>Классы стержней</div>
             <n-dynamic-input v-model:value="formValue.xc" :min="1" @create="() => ({})">
               <template #create-button-default> Добавить классы стержней </template>
               <template #default="{ value, index }">
@@ -167,7 +203,7 @@ async function validate(): Promise<void> {
                     <n-input-number
                       v-model:value="value.A"
                       :precision="2"
-                      :min="0"
+                      :validator="positiveValidator"
                       placeholder="A"
                       :show-button="false"
                     />
@@ -176,7 +212,7 @@ async function validate(): Promise<void> {
                     <n-input-number
                       v-model:value="value.E"
                       :precision="2"
-                      :min="0"
+                      :validator="positiveValidator"
                       placeholder="E"
                       :show-button="false"
                     />
@@ -185,7 +221,7 @@ async function validate(): Promise<void> {
                     <n-input-number
                       v-model:value="value.S"
                       :precision="2"
-                      :min="0"
+                      :validator="positiveValidator"
                       placeholder="[&#x03c3;]"
                       :show-button="false"
                     />
@@ -210,7 +246,13 @@ async function validate(): Promise<void> {
                   :path="`nb[${index}]`"
                   :rule="[requiredRule, xrNumberRule]"
                 >
-                  <n-input-number v-model:value="formValue.nb[index]" :min="1" placeholder="I" :show-button="false" />
+                  <n-input-number
+                    v-model:value="formValue.nb[index]"
+                    :precision="0"
+                    :min="1"
+                    placeholder="I"
+                    :show-button="false"
+                  />
                 </n-form-item>
               </template>
             </n-dynamic-input>
@@ -228,7 +270,13 @@ async function validate(): Promise<void> {
                     :path="`qr[${index}].I`"
                     :rule="[requiredRule, xrNumberRule, qrExistsRule]"
                   >
-                    <n-input-number v-model:value="value.I" :min="1" placeholder="I" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.I"
+                      :precision="0"
+                      :min="1"
+                      placeholder="I"
+                      :show-button="false"
+                    />
                   </n-form-item>
                   <n-form-item ignore-path-change :show-label="false" :path="`qr[${index}].Fx`" :rule="requiredRule">
                     <n-input-number v-model:value="value.Fx" :precision="2" placeholder="Fx" :show-button="false" />
@@ -250,7 +298,13 @@ async function validate(): Promise<void> {
                     :path="`qs[${index}].I`"
                     :rule="[requiredRule, xsNumberRule, qsExistsRule]"
                   >
-                    <n-input-number v-model:value="value.I" :min="1" placeholder="I" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.I"
+                      :precision="0"
+                      :min="1"
+                      placeholder="I"
+                      :show-button="false"
+                    />
                   </n-form-item>
                   <n-form-item ignore-path-change :show-label="false" :path="`qs[${index}].Qx`" :rule="requiredRule">
                     <n-input-number v-model:value="value.Qx" :precision="2" placeholder="Qx" :show-button="false" />
