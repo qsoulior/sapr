@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { NButton } from "naive-ui";
 import { SVG, type G, Container, Box } from "@svgdotjs/svg.js";
 import type { Bar, Node } from "@/store";
@@ -12,6 +12,49 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "back"): void;
 }>();
+
+const xr = computed(() => props.nodes.map((value) => value.x));
+const constructionWidth = computed(() => Math.max(...xr.value) - Math.min(...xr.value));
+const areas = computed(() => props.bars.map((value) => value.Ig.A));
+const constructionHeight = computed(() => Math.max(...areas.value));
+
+const percentageStep = 5;
+const widthPercentage = ref(50);
+const heightPercentage = ref(20);
+
+const container = ref<HTMLDivElement | null>(null);
+
+const immutableWidthRatio = computed(() => (container.value ? container.value.clientWidth * 0.06 : 0));
+const immutableHeightRatio = computed(() => (container.value ? container.value.clientHeight * 0.06 : 0));
+
+const mutableWidthRatio = computed(() =>
+  container.value
+    ? ((container.value.clientWidth - immutableWidthRatio.value * 1.2) / constructionWidth.value) *
+      (widthPercentage.value / 100)
+    : 0
+);
+const mutableHeightRatio = computed(() =>
+  container.value
+    ? ((container.value.clientHeight - immutableHeightRatio.value * 3) / constructionHeight.value) *
+      (heightPercentage.value / 100)
+    : 0
+);
+
+async function increaseSize({ widthFactor = percentageStep, heightFactor = percentageStep } = {}) {
+  if (widthPercentage.value + widthFactor <= 100 && heightPercentage.value + heightFactor <= 100) {
+    widthPercentage.value += widthFactor;
+    heightPercentage.value += heightFactor;
+    await render();
+  }
+}
+
+async function decreaseSize({ widthFactor = percentageStep, heightFactor = percentageStep } = {}) {
+  if (widthPercentage.value > 3 * widthFactor && heightPercentage.value > heightFactor) {
+    widthPercentage.value -= widthFactor;
+    heightPercentage.value -= heightFactor;
+    await render();
+  }
+}
 
 async function arrow(svg: Container, fromX: number, fromY: number, toX: number, toY: number): Promise<G> {
   const arrow = svg.group();
@@ -29,8 +72,8 @@ async function arrow(svg: Container, fromX: number, fromY: number, toX: number, 
 }
 
 async function concentratedLoad(svg: Container, x: number, y: number, reversed = false): Promise<G> {
-  const loadLen = kiw / 2;
-  const loadWidth = kih / 10;
+  const loadLen = immutableWidthRatio.value / 2;
+  const loadWidth = immutableHeightRatio.value / 10;
 
   const [fromX, toX] = reversed ? [x + loadLen, x] : [x, x + loadLen];
   return (await arrow(svg, fromX, y, toX, y)).stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
@@ -44,8 +87,8 @@ async function distributedLoad(svg: Container, fromX: number, toX: number, y: nu
     reversed = true;
   }
 
-  const loadWidth = kih / 30;
-  const space = Math.ceil(toX - fromX) / Math.ceil(kw / 15);
+  const loadWidth = immutableHeightRatio.value / 30;
+  const space = Math.ceil(toX - fromX) / Math.ceil(immutableWidthRatio.value / 10);
 
   let x1, x2;
   for (let i = fromX; i < toX; i += space) {
@@ -64,7 +107,7 @@ async function support(
   color: string
 ): Promise<G> {
   const support = svg.group();
-  const space = kih / 3;
+  const space = immutableHeightRatio.value / 3;
   const head = reversed ? -space : space;
 
   for (let i = fromY; Math.floor(i) <= Math.ceil(toY); i += space) {
@@ -83,16 +126,18 @@ async function number(
 ): Promise<G> {
   const group = svg.group();
 
+  const figureSize = immutableHeightRatio.value / 1.5;
+
   const figure =
     type === "node"
-      ? group.rect(kiw / 5, kiw / 5).attr({ stroke: color, fill: "transparent" })
-      : group.circle(kiw / 5).stroke(color);
+      ? group.rect(figureSize, figureSize).attr({ stroke: color, fill: "transparent" })
+      : group.circle(figureSize).stroke(color);
   figure.cx(x);
   figure.y(y);
 
   const nodeText = group
     .text(text)
-    .font({ size: kiw / 6 })
+    .font({ size: immutableHeightRatio.value / 2 })
     .fill(color);
   nodeText.cx(x);
   nodeText.cy(figure.cy());
@@ -100,12 +145,13 @@ async function number(
   return group;
 }
 
-async function render(kw: number, kh: number) {
+async function render() {
   if (container.value === null) return;
   container.value.innerHTML = "";
   const draw = SVG().addTo(container.value).size(container.value.clientWidth, container.value.clientHeight);
-  const padding = kiw / 2;
   const barColor = "#b0b0b0";
+
+  const padding = immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value;
 
   const boxes = new Array<Box>(props.nodes.length);
   const addBox = async (index: number, value: Box) => {
@@ -117,8 +163,10 @@ async function render(kw: number, kh: number) {
   for (const [index, value] of props.bars.entries()) {
     const [I, J] = [props.nodes[value.I], props.nodes[value.J]];
 
-    const rect = draw.rect(Math.abs(J.x - I.x) * kw, value.Ig.A * kh).attr({ stroke: barColor, fill: "transparent" });
-    rect.x((I.x < J.x ? I.x : J.x) * kw + padding);
+    const rect = draw
+      .rect(Math.abs(J.x - I.x) * mutableWidthRatio.value, value.Ig.A * mutableHeightRatio.value)
+      .attr({ stroke: barColor, fill: "transparent" });
+    rect.x((I.x < J.x ? I.x : J.x) * mutableWidthRatio.value + padding);
     rect.cy(draw.cy());
 
     for (const q of value.Qx) {
@@ -132,7 +180,7 @@ async function render(kw: number, kh: number) {
   }
 
   for (const [index, value] of props.nodes.entries()) {
-    const pos = value.x * kw + padding;
+    const pos = value.x * mutableWidthRatio.value + padding;
     const box = boxes[index];
 
     for (const load of value.Fx) {
@@ -147,35 +195,9 @@ async function render(kw: number, kh: number) {
   }
 }
 
-const container = ref<HTMLDivElement | null>(null);
-let kw = 0,
-  kh = 0,
-  kiw = 0,
-  kih = 0;
-
 onMounted(async () => {
-  if (container.value) {
-    kw = container.value.clientWidth * 0.06;
-    kh = container.value.clientHeight * 0.06;
-    kiw = kw;
-    kih = kh;
-  }
-  await render(kw, kh);
+  await render();
 });
-
-const sizeFactor = 1.1;
-
-async function increaseSize({ widthFactor = sizeFactor, heightFactor = sizeFactor } = {}) {
-  kw *= widthFactor;
-  kh *= heightFactor;
-  await render(kw, kh);
-}
-
-async function decreaseSize({ widthFactor = sizeFactor, heightFactor = sizeFactor } = {}) {
-  kw /= widthFactor;
-  kh /= heightFactor;
-  await render(kw, kh);
-}
 </script>
 
 <template>
@@ -191,8 +213,8 @@ async function decreaseSize({ widthFactor = sizeFactor, heightFactor = sizeFacto
     </div>
     <div>
       <div>A</div>
-      <n-button tertiary @click="increaseSize({ widthFactor: 1 })">+</n-button>
-      <n-button tertiary @click="decreaseSize({ widthFactor: 1 })">-</n-button>
+      <n-button tertiary @click="increaseSize({ widthFactor: 0 })">+</n-button>
+      <n-button tertiary @click="decreaseSize({ widthFactor: 0 })">-</n-button>
     </div>
   </div>
 </template>

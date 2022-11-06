@@ -39,7 +39,7 @@ const requiredRule: FormItemRule = {
 const positiveValidator = (value: number) => value > 0;
 
 const xrExistsRule: FormItemRule = {
-  validator: (rule: FormItemRule, value: number) => formValue.value.xr.filter((x) => x == value).length <= 1,
+  validator: (rule: FormItemRule, value: number) => formValue.value.xr.filter((x) => x === value).length <= 1,
   message: "Такой узел уже существует",
   trigger: ["blur"],
 };
@@ -57,7 +57,7 @@ const xsNumberRule: FormItemRule = {
 };
 
 const xsLengthRule = (xs: Xs): FormItemRule => ({
-  validator: (rule: FormItemRule, value: number) => value != xs.I,
+  validator: (rule: FormItemRule, value: number) => value !== xs.I,
   message: "Длина стержня равна 0",
   trigger: ["blur"],
 });
@@ -69,14 +69,20 @@ const xcNumberRule: FormItemRule = {
 };
 
 const qrExistsRule: FormItemRule = {
-  validator: (rule: FormItemRule, value: number) => formValue.value.qr.filter((q) => q.I == value).length <= 1,
+  validator: (rule: FormItemRule, value: number) => formValue.value.qr.filter((q) => q.I === value).length <= 1,
   message: "В узле уже есть силы",
   trigger: ["blur"],
 };
 
 const qsExistsRule: FormItemRule = {
-  validator: (rule: FormItemRule, value: number) => formValue.value.qs.filter((q) => q.I == value).length <= 1,
+  validator: (rule: FormItemRule, value: number) => formValue.value.qs.filter((q) => q.I === value).length <= 1,
   message: "На стержне уже есть нагрузки",
+  trigger: ["blur"],
+};
+
+const nbExistsRule: FormItemRule = {
+  validator: (rule: FormItemRule, value: number) => formValue.value.nb.filter((nb) => nb === value).length <= 1,
+  message: "В узле уже есть опора",
   trigger: ["blur"],
 };
 
@@ -275,7 +281,7 @@ async function validate(): Promise<void> {
                   ignore-path-change
                   :label="`${index + 1}`"
                   :path="`nb[${index}]`"
-                  :rule="[requiredRule, xrNumberRule]"
+                  :rule="[requiredRule, xrNumberRule, nbExistsRule]"
                 >
                   <n-input-number
                     v-model:value="formValue.nb[index]"
