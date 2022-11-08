@@ -49,7 +49,7 @@ async function increaseSize({ widthFactor = percentageStep, heightFactor = perce
 }
 
 async function decreaseSize({ widthFactor = percentageStep, heightFactor = percentageStep } = {}) {
-  if (widthPercentage.value > 3 * widthFactor && heightPercentage.value > heightFactor) {
+  if (widthPercentage.value > 5 * widthFactor && heightPercentage.value > 2 * heightFactor) {
     widthPercentage.value -= widthFactor;
     heightPercentage.value -= heightFactor;
     await render();
@@ -88,11 +88,10 @@ async function distributedLoad(svg: Container, fromX: number, toX: number, y: nu
   }
 
   const loadWidth = immutableHeightRatio.value / 30;
-  const space = immutableWidthRatio.value / 2;
+  const space = Math.floor(immutableWidthRatio.value / 2);
 
-  let x1, x2;
-  for (let i = fromX + 0.3 * space; i < toX - space; i += space) {
-    [x1, x2] = reversed ? [i + 0.7 * space, i] : [i, i + 0.7 * space];
+  for (let x = fromX; x + 0.7 * space <= toX; x += space) {
+    const [x1, x2] = reversed ? [x + 0.7 * space, x] : [x, x + 0.7 * space];
     arrow(arrows, x1, y, x2, y);
   }
   return arrows.stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
@@ -109,6 +108,8 @@ async function support(
   const support = svg.group();
   const space = immutableHeightRatio.value / 3;
   const head = reversed ? -space : space;
+
+  support.line(x, fromY, x, toY);
 
   for (let i = fromY; Math.floor(i) <= Math.ceil(toY); i += space) {
     support.line(x, i, x + head, i - head);
@@ -145,14 +146,7 @@ async function number(
   return group;
 }
 
-async function render() {
-  if (container.value === null) return;
-  container.value.innerHTML = "";
-  const draw = SVG().addTo(container.value).size(container.value.clientWidth, container.value.clientHeight);
-  const barColor = "#b0b0b0";
-
-  const padding = immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value;
-
+async function renderBars(svg: Container, padding: number, color: string) {
   const boxes = new Array<Box>(props.nodes.length);
   const addBox = async (index: number, value: Box) => {
     if ((boxes[index] !== undefined && boxes[index].height < value.height) || boxes[index] === undefined) {
@@ -163,39 +157,60 @@ async function render() {
   for (const [index, value] of props.bars.entries()) {
     const [I, J] = [props.nodes[value.I], props.nodes[value.J]];
 
-    const rect = draw
+    const rect = svg
       .rect(
-        Math.max(0.01, Math.round(Math.abs(J.x - I.x) * mutableWidthRatio.value)),
-        Math.max(0.01, Math.round(value.Ig.A * mutableHeightRatio.value))
+        Math.max(0.01, Math.abs(J.x - I.x) * mutableWidthRatio.value),
+        Math.max(0.01, value.Ig.A * mutableHeightRatio.value)
       )
-      .attr({ stroke: barColor, fill: "transparent" });
-    rect.x(Math.round((I.x < J.x ? I.x : J.x) * mutableWidthRatio.value + padding));
-    rect.cy(draw.cy());
+      .attr({ stroke: color, fill: "transparent" });
+    rect.x((I.x < J.x ? I.x : J.x) * mutableWidthRatio.value + padding);
+    rect.cy(svg.cy());
 
     for (const q of value.Qx) {
       const [x1, x2] = q < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
-      await distributedLoad(draw, x1, x2, rect.bbox().cy);
+      await distributedLoad(svg, x1, x2, rect.bbox().cy);
     }
-    await number(draw, (index + 1).toString(), rect.bbox().cx, rect.bbox().y2 + 10, "bar", barColor);
+    await number(svg, (index + 1).toString(), rect.bbox().cx, rect.bbox().y2 + 10, "bar", color);
 
     await addBox(value.I, rect.bbox());
     await addBox(value.J, rect.bbox());
   }
+  return boxes;
+}
 
+async function renderNodes(svg: Container, boxes: Box[], padding: number, color: string) {
   for (const [index, value] of props.nodes.entries()) {
-    const pos = Math.round(value.x * mutableWidthRatio.value + padding);
+    const pos = value.x * mutableWidthRatio.value + padding;
     const box = boxes[index];
 
-    if (value.Nb) {
-      await support(draw, pos, box.y, box.y2, index !== boxes.length - 1, barColor);
+    const minHeight = immutableHeightRatio.value * 1.8;
+    let [fromY, toY] = [box.y, box.y2];
+
+    if (toY - fromY < minHeight) {
+      [fromY, toY] = [svg.cy() - minHeight / 2, svg.cy() + minHeight / 2];
     }
+
+    if (value.Nb) {
+      await support(svg, pos, fromY, toY, index !== boxes.length - 1, color);
+    }
+
+    await number(svg, (index + 1).toString(), pos, toY + 10, "node", "#f06");
 
     for (const load of value.Fx) {
-      await concentratedLoad(draw, pos, box.cy, load < 0);
+      await concentratedLoad(svg, pos, box.cy, load < 0);
     }
-
-    await number(draw, (index + 1).toString(), pos, box.y2 + 10, "node", "#f06");
   }
+}
+
+async function render() {
+  if (container.value === null) return;
+  container.value.innerHTML = "";
+  const draw = SVG().addTo(container.value).size(container.value.clientWidth, container.value.clientHeight);
+  const barColor = "#b0b0b0";
+  const padding = immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value;
+
+  const boxes = await renderBars(draw, padding, barColor);
+  await renderNodes(draw, boxes, padding, barColor);
 }
 
 onMounted(async () => {
@@ -211,8 +226,8 @@ onMounted(async () => {
     <div ref="container" style="height: 500px"></div>
     <div>
       <div>Zoom</div>
-      <n-button tertiary @click="increaseSize()">+</n-button>
-      <n-button tertiary @click="decreaseSize()">-</n-button>
+      <n-button tertiary @click="increaseSize({ heightFactor: 0 })">+</n-button>
+      <n-button tertiary @click="decreaseSize({ heightFactor: 0 })">-</n-button>
     </div>
     <div>
       <div>A</div>
