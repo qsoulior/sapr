@@ -13,6 +13,8 @@ import {
 import { Bar, Node, type Form, type Xs } from "@/store";
 import PreprocessorStore from "@/components/PreprocessorStore.vue";
 
+const maxValue = 1e308;
+
 const emit = defineEmits<{
   (e: "validate", nodes: Node[], bars: Bar[]): void;
 }>();
@@ -167,7 +169,8 @@ async function validate(): Promise<void> {
                 >
                   <n-input-number
                     v-model:value="formValue.xr[index]"
-                    :precision="2"
+                    :min="-maxValue"
+                    :max="maxValue"
                     :show-button="false"
                     placeholder="x"
                   />
@@ -239,7 +242,7 @@ async function validate(): Promise<void> {
                   <n-form-item ignore-path-change :label="`${index + 1}`" :path="`xc[${index}].A`" :rule="requiredRule">
                     <n-input-number
                       v-model:value="value.A"
-                      :precision="2"
+                      :max="maxValue"
                       :validator="positiveValidator"
                       placeholder="A"
                       :show-button="false"
@@ -248,7 +251,7 @@ async function validate(): Promise<void> {
                   <n-form-item ignore-path-change :show-label="false" :path="`xc[${index}].E`" :rule="requiredRule">
                     <n-input-number
                       v-model:value="value.E"
-                      :precision="2"
+                      :max="maxValue"
                       :validator="positiveValidator"
                       placeholder="E"
                       :show-button="false"
@@ -257,7 +260,7 @@ async function validate(): Promise<void> {
                   <n-form-item ignore-path-change :show-label="false" :path="`xc[${index}].S`" :rule="requiredRule">
                     <n-input-number
                       v-model:value="value.S"
-                      :precision="2"
+                      :max="maxValue"
                       :validator="positiveValidator"
                       placeholder="[&#x03c3;]"
                       :show-button="false"
@@ -316,7 +319,13 @@ async function validate(): Promise<void> {
                     />
                   </n-form-item>
                   <n-form-item ignore-path-change :show-label="false" :path="`qr[${index}].Fx`" :rule="requiredRule">
-                    <n-input-number v-model:value="value.Fx" :precision="2" placeholder="Fx" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.Fx"
+                      :min="-maxValue"
+                      :max="maxValue"
+                      placeholder="Fx"
+                      :show-button="false"
+                    />
                   </n-form-item>
                 </div>
               </template>
@@ -344,7 +353,13 @@ async function validate(): Promise<void> {
                     />
                   </n-form-item>
                   <n-form-item ignore-path-change :show-label="false" :path="`qs[${index}].Qx`" :rule="requiredRule">
-                    <n-input-number v-model:value="value.Qx" :precision="2" placeholder="Qx" :show-button="false" />
+                    <n-input-number
+                      v-model:value="value.Qx"
+                      :min="-maxValue"
+                      :max="maxValue"
+                      placeholder="Qx"
+                      :show-button="false"
+                    />
                   </n-form-item>
                 </div>
               </template>
