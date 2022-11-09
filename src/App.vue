@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { NConfigProvider, NGlobalStyle, NMessageProvider, NLayout, NLayoutContent, darkTheme } from "naive-ui";
+import { NConfigProvider, NGlobalStyle, NMessageProvider, NLayout, darkTheme } from "naive-ui";
 
 import PreprocessorItem from "@/components/PreprocessorItem.vue";
 import ProcessorItem from "@/components/ProcessorItem.vue";
@@ -18,7 +18,7 @@ const currentTab = ref("preprocessor");
 <template>
   <n-config-provider :theme="darkTheme">
     <n-message-provider>
-      <n-layout content-style="padding: 1rem;">
+      <n-layout content-style="padding: 1rem; min-height: 100vh; display: flex; flex-direction: column">
         <component :is="tabs.get(currentTab)" />
       </n-layout>
     </n-message-provider>
@@ -26,7 +26,4 @@ const currentTab = ref("preprocessor");
   </n-config-provider>
 </template>
 
-<style scoped>
-.container {
-}
-</style>
+<style scoped></style>

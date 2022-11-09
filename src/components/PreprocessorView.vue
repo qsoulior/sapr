@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { NButton } from "naive-ui";
+import { NButton, NButtonGroup, NIcon } from "naive-ui";
 import { SVG, type G, Container, Box } from "@svgdotjs/svg.js";
 import type { Bar, Node } from "@/store";
+import IconAdd from "@/components/icons/IconAdd.vue";
+import IconRemove from "@/components/icons/IconRemove.vue";
 
 const props = defineProps<{
   nodes: Node[];
@@ -73,7 +75,7 @@ async function arrow(svg: Container, fromX: number, fromY: number, toX: number, 
 
 async function concentratedLoad(svg: Container, x: number, y: number, reversed = false): Promise<G> {
   const loadLen = immutableWidthRatio.value / 2;
-  const loadWidth = immutableHeightRatio.value / 10;
+  const loadWidth = Math.max(immutableWidthRatio.value, immutableHeightRatio.value) / 25;
 
   const [fromX, toX] = reversed ? [x + loadLen, x] : [x, x + loadLen];
   return (await arrow(svg, fromX, y, toX, y)).stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
@@ -127,18 +129,20 @@ async function number(
 ): Promise<G> {
   const group = svg.group();
 
-  const figureSize = immutableHeightRatio.value / 1.5;
+  const maxImmutableRatio = Math.max(immutableWidthRatio.value, immutableHeightRatio.value);
+
+  const figureSize = maxImmutableRatio / 4;
 
   const figure =
     type === "node"
       ? group.rect(figureSize, figureSize).attr({ stroke: color, fill: "transparent" })
-      : group.circle(figureSize).stroke(color);
+      : group.circle(figureSize).attr({ stroke: color, fill: "transparent" });
   figure.cx(x);
   figure.y(y);
 
   const nodeText = group
     .text(text)
-    .font({ size: immutableHeightRatio.value / 2 })
+    .font({ size: maxImmutableRatio / 5 })
     .fill(color);
   nodeText.cx(x);
   nodeText.cy(figure.cy());
@@ -219,20 +223,42 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <div>
+  <div style="display: flex; flex-direction: column; flex: auto">
+    <div style="display: flex; justify-content: space-between; flex: 0 1 auto">
       <n-button tertiary @click="emit('back')">Назад</n-button>
+      <div style="display: flex; gap: 1rem">
+        <div>
+          <n-button-group style="margin-bottom: 0.5rem">
+            <n-button ghost @click="increaseSize({ heightFactor: 0 })">
+              <template #icon>
+                <n-icon size="1rem"><icon-add /></n-icon>
+              </template>
+            </n-button>
+            <n-button ghost @click="decreaseSize({ heightFactor: 0 })">
+              <template #icon>
+                <n-icon size="1rem"><icon-remove /></n-icon>
+              </template>
+            </n-button>
+          </n-button-group>
+          <div style="text-align: center">Ширина</div>
+        </div>
+        <div>
+          <n-button-group style="margin-bottom: 0.5rem">
+            <n-button ghost @click="increaseSize({ widthFactor: 0 })">
+              <template #icon>
+                <n-icon size="1rem"><icon-add /></n-icon>
+              </template>
+            </n-button>
+            <n-button ghost @click="decreaseSize({ widthFactor: 0 })">
+              <template #icon>
+                <n-icon size="1rem"><icon-remove /></n-icon>
+              </template>
+            </n-button>
+          </n-button-group>
+          <div style="text-align: center">Высота</div>
+        </div>
+      </div>
     </div>
-    <div ref="container" style="height: 500px"></div>
-    <div>
-      <div>Zoom</div>
-      <n-button tertiary @click="increaseSize({ heightFactor: 0 })">+</n-button>
-      <n-button tertiary @click="decreaseSize({ heightFactor: 0 })">-</n-button>
-    </div>
-    <div>
-      <div>A</div>
-      <n-button tertiary @click="increaseSize({ widthFactor: 0 })">+</n-button>
-      <n-button tertiary @click="decreaseSize({ widthFactor: 0 })">-</n-button>
-    </div>
+    <div ref="container" style="display: flex; flex: auto"></div>
   </div>
 </template>

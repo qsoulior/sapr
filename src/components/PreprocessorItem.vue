@@ -17,9 +17,6 @@ function handleValidate(nodes: Node[], bars: Bar[]) {
 </script>
 
 <template>
-  <div>
-    <h3>Препроцессор</h3>
-    <preprocessor-view v-if="isShow" :nodes="formNodes" :bars="formBars" @back="isShow = false" />
-    <preprocessor-form v-else @validate="handleValidate" />
-  </div>
+  <preprocessor-view v-if="isShow" :nodes="formNodes" :bars="formBars" @back="isShow = false" />
+  <preprocessor-form v-else @validate="handleValidate" />
 </template>
