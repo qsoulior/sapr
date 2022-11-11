@@ -35,12 +35,12 @@ export interface Form {
 
 export class Node {
   x: number;
-  Fx: number[];
+  Fx: number;
   Nb: boolean;
 
   constructor(index: number, form: Form) {
     this.x = form.xr[index];
-    this.Fx = form.qr.filter((value) => value.I === index + 1).map((value) => value.Fx);
+    this.Fx = form.qr.filter((value) => value.I === index + 1).reduce((sum, value) => sum + value.Fx, 0);
     this.Nb = form.nb.includes(index + 1);
   }
 }
@@ -49,13 +49,18 @@ export class Bar {
   I: number;
   J: number;
   Ig: Xc;
-  Qx: number[];
+  Qx: number;
 
   constructor(index: number, form: Form) {
     const item = form.xs[index];
     this.I = item.I - 1;
     this.J = item.J - 1;
     this.Ig = form.xc[item.Ig - 1];
-    this.Qx = form.qs.filter((value) => value.I === index + 1).map((value) => value.Qx);
+    this.Qx = form.qs.filter((value) => value.I === index + 1).reduce((sum, value) => sum + value.Qx, 0);
+    if (form.xr[this.I] > form.xr[this.J]) this.Qx = -this.Qx;
+  }
+
+  length(nodes: Node[]) {
+    return Math.abs(nodes[this.I].x - nodes[this.J].x);
   }
 }

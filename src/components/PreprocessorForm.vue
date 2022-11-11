@@ -318,6 +318,7 @@ async function validate(): Promise<void> {
     </n-form>
     <div style="display: flex; gap: 1rem">
       <n-button tertiary @click.prevent="validate">Отрисовать стержневую систему</n-button>
+      <n-button tertiary>Выполнить вычисления</n-button>
       <n-button tertiary @click="storeRef?.clearLocal">Очистить</n-button>
     </div>
   </div>

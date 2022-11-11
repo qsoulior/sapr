@@ -3,6 +3,7 @@ import { ref } from "vue";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
 import type { Bar, Node } from "@/store";
+import { useProcessor } from "@/composables/processor";
 
 const isShow = ref(false);
 
@@ -12,6 +13,8 @@ const formBars = ref<Bar[]>([]);
 function handleValidate(nodes: Node[], bars: Bar[]) {
   formNodes.value = nodes;
   formBars.value = bars;
+
+  const processor = useProcessor(formNodes.value, formBars.value);
   isShow.value = true;
 }
 </script>

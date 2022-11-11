@@ -142,7 +142,7 @@ async function number(
 
   const nodeText = group
     .text(text)
-    .font({ size: maxImmutableRatio / 5 })
+    .font({ size: maxImmutableRatio / 6 })
     .fill(color);
   nodeText.cx(x);
   nodeText.cy(figure.cy());
@@ -170,8 +170,8 @@ async function renderBars(svg: Container, padding: number, color: string) {
     rect.x((I.x < J.x ? I.x : J.x) * mutableWidthRatio.value + padding);
     rect.cy(svg.cy());
 
-    for (const q of value.Qx) {
-      const [x1, x2] = q < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
+    if (value.Qx !== 0) {
+      const [x1, x2] = value.Qx < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
       await distributedLoad(svg, x1, x2, rect.bbox().cy);
     }
     await number(svg, (index + 1).toString(), rect.bbox().cx, rect.bbox().y2 + 10, "bar", color);
@@ -200,8 +200,8 @@ async function renderNodes(svg: Container, boxes: Box[], padding: number, color:
 
     await number(svg, (index + 1).toString(), pos, toY + 10, "node", "#f06");
 
-    for (const load of value.Fx) {
-      await concentratedLoad(svg, pos, box.cy, load < 0);
+    if (value.Fx !== 0) {
+      await concentratedLoad(svg, pos, box.cy, value.Fx < 0);
     }
   }
 }
