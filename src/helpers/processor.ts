@@ -9,7 +9,7 @@ interface Result {
   Sx: NumberFunction[];
 }
 
-export async function useProcessor(nodes: Node[], bars: Bar[]): Promise<Result> {
+export async function calculateComponents(nodes: Node[], bars: Bar[]): Promise<Result> {
   const sortedNodes = Array.from(nodes).sort((a, b) => a.x - b.x);
   const sortedBars = Array.from(bars).sort(
     (a, b) => Math.min(nodes[a.I].x, nodes[a.J].x) - Math.min(nodes[b.I].x, nodes[b.J].x)
