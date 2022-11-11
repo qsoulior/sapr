@@ -7,8 +7,6 @@ export async function useProcessor(nodes: Node[], bars: Bar[]): Promise<number[]
     (a, b) => Math.min(nodes[a.I].x, nodes[a.J].x) - Math.min(nodes[b.I].x, nodes[b.J].x)
   );
 
-  console.log(sortedBars.map((value) => value.Qx));
-
   const reactions = sortedNodes.map((value) => value.Fx);
   const EAL = sortedBars.map((value) => (value.Ig.E * value.Ig.A) / value.length(nodes));
   const A = Array.from({ length: nodes.length }, () => Array<number>(nodes.length).fill(0));
@@ -35,7 +33,7 @@ export async function useProcessor(nodes: Node[], bars: Bar[]): Promise<number[]
 
   reactions[0] += (sortedBars[0].Qx * sortedBars[0].length(nodes)) / 2;
   for (let i = 1; i < reactions.length - 1; i++) {
-    reactions[i] =
+    reactions[i] +=
       (sortedBars[i - 1].Qx * sortedBars[i - 1].length(nodes) + sortedBars[i].Qx * sortedBars[i].length(nodes)) / 2;
   }
   reactions[reactions.length - 1] +=

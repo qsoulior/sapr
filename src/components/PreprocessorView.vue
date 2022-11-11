@@ -22,7 +22,7 @@ const constructionHeight = computed(() => Math.max(...areas.value));
 
 const percentageStep = 5;
 const widthPercentage = ref(50);
-const heightPercentage = ref(20);
+const heightPercentage = ref(25);
 
 const container = ref<HTMLDivElement | null>(null);
 
