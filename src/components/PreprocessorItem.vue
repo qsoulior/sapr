@@ -10,11 +10,12 @@ const isShow = ref(false);
 const formNodes = ref<Node[]>([]);
 const formBars = ref<Bar[]>([]);
 
-function handleValidate(nodes: Node[], bars: Bar[]) {
+async function handleValidate(nodes: Node[], bars: Bar[]) {
   formNodes.value = nodes;
   formBars.value = bars;
 
-  const processor = useProcessor(formNodes.value, formBars.value);
+  const processor = await useProcessor(formNodes.value, formBars.value);
+  console.log(processor);
   isShow.value = true;
 }
 </script>

@@ -1,14 +1,15 @@
+import { lusolve, number, isComplex } from "mathjs";
 import type { Bar, Node } from "@/store";
 
-export function useProcessor(nodes: Node[], bars: Bar[]) {
+export async function useProcessor(nodes: Node[], bars: Bar[]): Promise<number[]> {
   const sortedNodes = Array.from(nodes).sort((a, b) => a.x - b.x);
   const sortedBars = Array.from(bars).sort(
     (a, b) => Math.min(nodes[a.I].x, nodes[a.J].x) - Math.min(nodes[b.I].x, nodes[b.J].x)
   );
 
-  const displacements = new Array<number>(nodes.length);
-  const reactions = sortedNodes.map((value) => value.Fx);
+  console.log(sortedBars.map((value) => value.Qx));
 
+  const reactions = sortedNodes.map((value) => value.Fx);
   const EAL = sortedBars.map((value) => (value.Ig.E * value.Ig.A) / value.length(nodes));
   const A = Array.from({ length: nodes.length }, () => Array<number>(nodes.length).fill(0));
 
@@ -40,6 +41,15 @@ export function useProcessor(nodes: Node[], bars: Bar[]) {
   reactions[reactions.length - 1] +=
     (sortedBars[reactions.length - 2].Qx * sortedBars[reactions.length - 2].length(nodes)) / 2;
 
-  console.log(A);
-  console.log(reactions);
+  for (let i = 0; i < reactions.length; i++) {
+    if (sortedNodes[i].Nb) reactions[i] = 0;
+  }
+
+  const displacements = lusolve(A, reactions)
+    .map((value) => (Array.isArray(value) ? value[0] : value))
+    .map((value) => {
+      if (isComplex(value)) throw new Error("Calculation error");
+      return number(value);
+    });
+  return displacements;
 }

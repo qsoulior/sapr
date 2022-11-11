@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@svgdotjs/svg.js": "^3.1.2",
+    "mathjs": "^11.3.3",
     "naive-ui": "^2.33.5",
     "vfonts": "^0.0.3",
     "vue": "^3.2.41"
