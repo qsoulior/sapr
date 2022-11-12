@@ -220,7 +220,7 @@ defineExpose({
               v-model:value="value.S"
               :max="maxValue"
               :validator="positiveValidator"
-              placeholder="[&#x03c3;]"
+              placeholder="[&#963;]"
               :show-button="false"
             />
           </n-form-item>
@@ -267,7 +267,7 @@ defineExpose({
               v-model:value="value.Fx"
               :min="-maxValue"
               :max="maxValue"
-              placeholder="Fx"
+              placeholder="F"
               :show-button="false"
             />
           </n-form-item>
@@ -293,7 +293,7 @@ defineExpose({
               v-model:value="value.Qx"
               :min="-maxValue"
               :max="maxValue"
-              placeholder="Qx"
+              placeholder="q"
               :show-button="false"
             />
           </n-form-item>

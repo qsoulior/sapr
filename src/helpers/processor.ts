@@ -1,15 +1,15 @@
 import { lusolve, number, isComplex } from "mathjs";
 import type { Bar, Node } from "@/store";
 
-type NumberFunction = (x: number) => number;
+export type NumberFunction = (x: number) => number;
 
-interface Result {
+export interface ComputationResult {
   Ux: NumberFunction[];
   Nx: NumberFunction[];
   Sx: NumberFunction[];
 }
 
-export async function calculateComponents(nodes: Node[], bars: Bar[]): Promise<Result> {
+export async function computeComponents(nodes: Node[], bars: Bar[]): Promise<ComputationResult> {
   const b = nodes.map((value) => value.Fx);
   const EAL = bars.map((value) => (value.Ig.E * value.Ig.A) / value.length);
   const A = Array.from({ length: nodes.length }, () => Array<number>(nodes.length).fill(0));

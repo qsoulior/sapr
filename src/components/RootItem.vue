@@ -4,7 +4,8 @@ import { useMessage, NButton, NModal } from "naive-ui";
 import type { Bar, Node } from "@/store";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
-import { calculateComponents } from "@/helpers/processor";
+import PostprocessorSelect from "@/components/PostprocessorSelect.vue";
+import { computeComponents, type ComputationResult } from "@/helpers/processor";
 
 const message = useMessage();
 
@@ -36,11 +37,13 @@ async function render() {
   isShow.value = isValid;
 }
 
+const computationResult = ref<ComputationResult | null>(null);
+
 async function compute() {
   const isValid = await validate();
   if (isValid) {
-    const result = await calculateComponents(formNodes.value, formBars.value);
-    console.log(result);
+    const result = await computeComponents(formNodes.value, formBars.value);
+    computationResult.value = result;
     showModal.value = true;
   }
 }
@@ -56,13 +59,14 @@ async function compute() {
       <n-button tertiary @click="formRef?.clear">Очистить</n-button>
     </div>
     <n-modal v-model:show="showModal" preset="card" style="width: 30rem" :auto-focus="false">
-      <template #header> Выберите представление результатов </template>
+      <template #header> Выберите операцию </template>
       <template #default>
         <div style="display: flex; flex-direction: column; gap: 1rem">
+          <div>Представление результатов вычислений</div>
           <n-button tertiary>Таблицы</n-button>
           <n-button tertiary>Эпюры</n-button>
           <n-button tertiary>Графики</n-button>
-          <n-button tertiary>Значение в сечении</n-button>
+          <postprocessor-select :bars="formBars" :computation="computationResult" style="margin-top: 1rem" />
         </div>
       </template>
     </n-modal>
