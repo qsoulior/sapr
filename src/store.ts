@@ -34,11 +34,13 @@ export interface Form {
 }
 
 export class Node {
+  label: string;
   x: number;
   Fx: number;
   Nb: boolean;
 
   constructor(index: number, form: Form) {
+    this.label = (index + 1).toString();
     this.x = form.xr[index];
     this.Fx = form.qr.filter((value) => value.I === index + 1).reduce((sum, value) => sum + value.Fx, 0);
     this.Nb = form.nb.includes(index + 1);
@@ -46,21 +48,31 @@ export class Node {
 }
 
 export class Bar {
-  I: number;
-  J: number;
+  label: string;
+  x1: number;
+  x2: number;
   Ig: Xc;
   Qx: number;
 
   constructor(index: number, form: Form) {
     const item = form.xs[index];
-    this.I = item.I - 1;
-    this.J = item.J - 1;
+    this.label = (index + 1).toString();
+    this.x1 = form.xr[item.I - 1];
+    this.x2 = form.xr[item.J - 1];
     this.Ig = form.xc[item.Ig - 1];
     this.Qx = form.qs.filter((value) => value.I === index + 1).reduce((sum, value) => sum + value.Qx, 0);
-    if (form.xr[this.I] > form.xr[this.J]) this.Qx = -this.Qx;
+    if (this.x1 > this.x2) this.Qx = -this.Qx;
   }
 
-  length(nodes: Node[]) {
-    return Math.abs(nodes[this.I].x - nodes[this.J].x);
+  get length() {
+    return Math.abs(this.x1 - this.x2);
+  }
+
+  get start() {
+    return Math.min(this.x1, this.x2);
+  }
+
+  get end() {
+    return Math.max(this.x1, this.x2);
   }
 }

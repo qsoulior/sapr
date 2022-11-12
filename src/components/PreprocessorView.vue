@@ -151,41 +151,38 @@ async function number(
 }
 
 async function renderBars(svg: Container, padding: number, color: string) {
-  const boxes = new Array<Box>(props.nodes.length);
-  const addBox = async (index: number, value: Box) => {
-    if ((boxes[index] !== undefined && boxes[index].height < value.height) || boxes[index] === undefined) {
-      boxes[index] = value;
+  const boxes = new Map<number, Box>();
+  const addBox = async (x: number, value: Box) => {
+    const box = boxes.get(x);
+    if ((box !== undefined && box.height < value.height) || box === undefined) {
+      boxes.set(x, value);
     }
   };
 
-  for (const [index, value] of props.bars.entries()) {
-    const [I, J] = [props.nodes[value.I], props.nodes[value.J]];
-
+  for (const bar of props.bars) {
     const rect = svg
-      .rect(
-        Math.max(0.01, Math.abs(J.x - I.x) * mutableWidthRatio.value),
-        Math.max(0.01, value.Ig.A * mutableHeightRatio.value)
-      )
+      .rect(Math.max(0.01, bar.length * mutableWidthRatio.value), Math.max(0.01, bar.Ig.A * mutableHeightRatio.value))
       .attr({ stroke: color, fill: "transparent" });
-    rect.x((I.x < J.x ? I.x : J.x) * mutableWidthRatio.value + padding);
+    rect.x(bar.start * mutableWidthRatio.value + padding);
     rect.cy(svg.cy());
 
-    if (value.Qx !== 0) {
-      const [x1, x2] = value.Qx < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
+    if (bar.Qx !== 0) {
+      const [x1, x2] = bar.Qx < 0 ? [rect.bbox().x2, rect.bbox().x] : [rect.bbox().x, rect.bbox().x2];
       await distributedLoad(svg, x1, x2, rect.bbox().cy);
     }
-    await number(svg, (index + 1).toString(), rect.bbox().cx, rect.bbox().y2 + 10, "bar", color);
+    await number(svg, bar.label, rect.bbox().cx, rect.bbox().y2 + 10, "bar", color);
 
-    await addBox(value.I, rect.bbox());
-    await addBox(value.J, rect.bbox());
+    await addBox(bar.x1, rect.bbox());
+    await addBox(bar.x2, rect.bbox());
   }
   return boxes;
 }
 
-async function renderNodes(svg: Container, boxes: Box[], padding: number, color: string) {
-  for (const [index, value] of props.nodes.entries()) {
-    const pos = value.x * mutableWidthRatio.value + padding;
-    const box = boxes[index];
+async function renderNodes(svg: Container, boxes: Map<number, Box>, padding: number, color: string) {
+  for (const [index, node] of props.nodes.entries()) {
+    const pos = node.x * mutableWidthRatio.value + padding;
+    const box = boxes.get(node.x);
+    if (box === undefined) break;
 
     const minHeight = immutableHeightRatio.value * 1.8;
     let [fromY, toY] = [box.y, box.y2];
@@ -194,14 +191,14 @@ async function renderNodes(svg: Container, boxes: Box[], padding: number, color:
       [fromY, toY] = [svg.cy() - minHeight / 2, svg.cy() + minHeight / 2];
     }
 
-    if (value.Nb) {
-      await support(svg, pos, fromY, toY, index !== boxes.length - 1, color);
+    if (node.Nb) {
+      await support(svg, pos, fromY, toY, index !== props.nodes.length - 1, color);
     }
 
-    await number(svg, (index + 1).toString(), pos, toY + 10, "node", "#f06");
+    await number(svg, node.label, pos, toY + 10, "node", "#f06");
 
-    if (value.Fx !== 0) {
-      await concentratedLoad(svg, pos, box.cy, value.Fx < 0);
+    if (node.Fx !== 0) {
+      await concentratedLoad(svg, pos, box.cy, node.Fx < 0);
     }
   }
 }

@@ -75,13 +75,6 @@ const nbExistsRule: FormItemRule = {
 
 const storageRef = ref<InstanceType<typeof PreprocessorStorage> | null>(null);
 
-async function getXsBound(xr: number[], xs: Xs[]) {
-  return xs.map((value) => {
-    const [I, J] = [xr[value.I - 1], xr[value.J - 1]];
-    return I < J ? { x1: I, x2: J } : { x1: J, x2: I };
-  });
-}
-
 interface ValidationResult {
   nodes: Node[];
   bars: Bar[];
@@ -108,16 +101,16 @@ async function validate(): Promise<ValidationResult> {
     throw new Error("Конструкция содержит незадействованные узлы");
   }
 
-  const xsBound = await getXsBound(formValue.value.xr, formValue.value.xs);
-  xsBound.sort((a, b) => a.x1 - b.x1);
-  for (let i = 1; i < xsBound.length; i++) {
-    if (xsBound[i].x1 !== xsBound[i - 1].x2) {
+  const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value)).sort((a, b) => a.x - b.x);
+  const bars = formValue.value.xs
+    .map((item, index) => new Bar(index, formValue.value))
+    .sort((a, b) => a.start - b.start);
+
+  for (let i = 1; i < bars.length; i++) {
+    if (bars[i].start !== bars[i - 1].end) {
       throw new Error("Конструкция задана неправильно");
     }
   }
-
-  const nodes = formValue.value.xr.map((item, index) => new Node(index, formValue.value));
-  const bars = formValue.value.xs.map((item, index) => new Bar(index, formValue.value));
 
   await storageRef.value?.saveLocal();
   return { nodes, bars };
