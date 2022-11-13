@@ -74,3 +74,10 @@ const Sx = Fx(props.computation?.Sx);
     </n-table>
   </div>
 </template>
+
+<style scoped>
+td,
+th {
+  width: calc(100% / 3);
+}
+</style>

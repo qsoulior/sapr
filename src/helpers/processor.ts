@@ -58,8 +58,10 @@ export async function computeComponents(nodes: Node[], bars: Bar[]): Promise<Com
   for (let i = 0; i < d.length - 1; i++) {
     const bar = bars[i];
     const [L, E, A, q] = [bar.length, bar.Ig.E, bar.Ig.A, bar.Qx];
-    Ux[i] = (x) => d[i] + (x / L) * (d[i + 1] - d[i]) + ((q * L * x) / (2 * E * A)) * (1 - x / L);
-    Nx[i] = (x) => ((E * A) / L) * (d[i + 1] - d[i]) + ((q * L) / 2) * (1 - (2 * x) / L);
+    const [U0, UL] = bar.x1 < bar.x2 ? [d[i], d[i + 1]] : [d[i + 1], d[i]];
+
+    Ux[i] = (x) => U0 + (x / L) * (UL - U0) + ((q * L * x) / (2 * E * A)) * (1 - x / L);
+    Nx[i] = (x) => ((E * A) / L) * (UL - U0) + ((q * L) / 2) * (1 - (2 * x) / L);
     Sx[i] = (x) => Nx[i](x) / A;
   }
   return { Ux, Nx, Sx };

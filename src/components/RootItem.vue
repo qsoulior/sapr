@@ -5,11 +5,18 @@ import type { Bar, Node } from "@/store";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
 import PostprocessorSelect from "@/components/PostprocessorSelect.vue";
+import PostprocessorTable from "@/components/PostprocessorTable.vue";
 import { computeComponents, type ComputationResult } from "@/helpers/processor";
 
 const message = useMessage();
 
-const isShow = ref(false);
+enum Tab {
+  PreprocessorForm,
+  PreprocessorView,
+  PostprocessorTable,
+}
+
+const currentTab = ref(Tab.PreprocessorForm);
 const showModal = ref(false);
 
 const formRef = ref<InstanceType<typeof PreprocessorForm> | null>(null);
@@ -34,7 +41,7 @@ async function validate(): Promise<boolean> {
 
 async function render() {
   const isValid = await validate();
-  isShow.value = isValid;
+  if (isValid) currentTab.value = Tab.PreprocessorView;
 }
 
 const computationResult = ref<ComputationResult | null>(null);
@@ -50,8 +57,8 @@ async function compute() {
 </script>
 
 <template>
-  <preprocessor-view v-if="isShow" :nodes="formNodes" :bars="formBars" @back="isShow = false" />
-  <div v-else style="display: flex; flex-direction: column; gap: 1rem">
+  <preprocessor-view v-if="currentTab === 1" :nodes="formNodes" :bars="formBars" @back="currentTab = 0" />
+  <div v-else-if="currentTab === 0" style="display: flex; flex-direction: column; gap: 1rem">
     <preprocessor-form ref="formRef" />
     <div style="display: flex; gap: 1rem">
       <n-button tertiary @click="render">Отрисовать стержневую систему</n-button>
@@ -63,7 +70,7 @@ async function compute() {
       <template #default>
         <div style="display: flex; flex-direction: column; gap: 1rem">
           <div>Представление результатов вычислений</div>
-          <n-button tertiary>Таблицы</n-button>
+          <n-button tertiary @click="currentTab = 2">Таблицы</n-button>
           <n-button tertiary>Эпюры</n-button>
           <n-button tertiary>Графики</n-button>
           <postprocessor-select :bars="formBars" :computation="computationResult" style="margin-top: 1rem" />
@@ -71,4 +78,10 @@ async function compute() {
       </template>
     </n-modal>
   </div>
+  <postprocessor-table
+    v-else-if="currentTab === 2"
+    :bars="formBars"
+    :computation="computationResult"
+    @back="currentTab = 0"
+  />
 </template>
