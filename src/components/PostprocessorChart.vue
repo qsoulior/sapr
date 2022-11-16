@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { NButton, NPagination } from "naive-ui";
-import { AutoScaleAxis, LineChart } from "chartist";
+import { NButton, NPagination, NCheckbox } from "naive-ui";
+import { AutoScaleAxis, Interpolation, LineChart, type SeriesObject } from "chartist";
 import "chartist/dist/index.css";
 import { ctLineLabels } from "@/helpers/chartist";
 import { range } from "@/helpers/common";
@@ -23,6 +23,7 @@ const barsData = computed(() => {
   return props.bars
     .map((bar, index) => ({
       label: bar.label,
+      L: bar.length,
       Nx: Nx[index],
       Ux: Ux[index],
       Sx: Sx[index],
@@ -31,44 +32,63 @@ const barsData = computed(() => {
 });
 
 const pageCount = computed(() => props.bars.length);
+const pageValue = ref(1);
 
-async function handlePageUpdate(page: number) {
-  await render(page - 1);
+async function handlePageUpdate() {
+  await render(pageValue.value - 1);
 }
 
 const chartRef = ref<HTMLDivElement | null>(null);
 
+const nxChecked = ref(true);
+const sxChecked = ref(true);
+const uxChecked = ref(true);
+
+async function handleCheckboxUpdate() {
+  await render(pageValue.value - 1);
+}
+
 async function render(index: number) {
   if (chartRef.value === null || barsData.value.length === 0) return;
 
-  const a = -10,
-    b = 10;
+  const a = 0,
+    b = barsData.value[index].L;
 
   const { Nx, Ux, Sx } = barsData.value[index];
+
+  const series: SeriesObject[] = [];
+
+  if (nxChecked.value) {
+    series.push({
+      name: "N\u2093",
+      data: [
+        { x: a, y: Nx(a) },
+        { x: b, y: Nx(b) },
+      ],
+    });
+  }
+
+  if (sxChecked.value) {
+    series.push({
+      name: "\u03C3\u2093",
+      data: [
+        { x: a, y: Sx(a) },
+        { x: b, y: Sx(b) },
+      ],
+    });
+  }
+
+  if (uxChecked.value) {
+    series.push({
+      name: "U\u2093",
+      data: range(a, b, 0.01).map((value) => ({ x: value, y: Ux(value) })),
+    });
+  }
 
   new LineChart(
     chartRef.value,
     {
-      series: [
-        {
-          name: "N\u2093",
-          data: [
-            { x: a, y: Nx(a) },
-            { x: b, y: Nx(b) },
-          ],
-        },
-        {
-          name: "\u03C3\u2093",
-          data: [
-            { x: a, y: Sx(a) },
-            { x: b, y: Sx(b) },
-          ],
-        },
-        {
-          name: "U\u2093",
-          data: range(a, b, 0.5).map((value) => ({ x: value, y: Ux(value) })),
-        },
-      ],
+      series: series,
     },
     {
       showPoint: false,
@@ -82,7 +102,7 @@ async function render(index: number) {
 }
 
 onMounted(async () => {
-  await render(0);
+  await render(pageValue.value - 1);
 });
 </script>
 
@@ -90,7 +110,14 @@ onMounted(async () => {
   <div style="display: flex; flex-direction: column; gap: 1rem; flex: auto">
     <div style="display: flex; justify-content: space-between; gap: 1rem">
       <n-button tertiary @click="emit('back')">Назад</n-button>
-      <n-pagination :default-page="1" :page-count="pageCount" @update:page="handlePageUpdate" />
+      <div style="display: flex; align-items: center; gap: 1rem">
+        <div style="display: flex; align-items: center; gap: 0.5rem">
+          <n-checkbox v-model:checked="nxChecked" @update:checked="handleCheckboxUpdate">N<sub>x</sub></n-checkbox>
+          <n-checkbox v-model:checked="sxChecked" @update:checked="handleCheckboxUpdate">&#963;<sub>x</sub></n-checkbox>
+          <n-checkbox v-model:checked="uxChecked" @update:checked="handleCheckboxUpdate">U<sub>x</sub></n-checkbox>
+        </div>
+        <n-pagination v-model:page="pageValue" :page-count="pageCount" @update:page="handlePageUpdate" />
+      </div>
     </div>
     <div ref="chartRef" style="flex: auto"></div>
   </div>

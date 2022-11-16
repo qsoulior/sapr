@@ -25,7 +25,7 @@ export function ctLineLabels(options: Partial<Options>) {
     const opt = extend({}, defaultOptions, options);
 
     if (chart instanceof LineChart) {
-      chart.on("draw", function (data) {
+      chart.on("draw", (data) => {
         if (data.type === "line") {
           const pathElement = data.path.pathElements[0];
           data.group

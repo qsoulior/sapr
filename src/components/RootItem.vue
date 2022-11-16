@@ -7,6 +7,7 @@ import PreprocessorForm from "@/components/PreprocessorForm.vue";
 import PostprocessorSelect from "@/components/PostprocessorSelect.vue";
 import PostprocessorTable from "@/components/PostprocessorTable.vue";
 import PostprocessorChart from "@/components/PostprocessorChart.vue";
+import PostprocessorEpure from "@/components/PostprocessorEpure.vue";
 import { computeComponents, type ComputationResult } from "@/helpers/processor";
 
 const message = useMessage();
@@ -16,6 +17,7 @@ enum Tab {
   PreprocessorView,
   PostprocessorTable,
   PostprocessorChart,
+  PostprocessorEpure,
 }
 
 const currentTab = ref(Tab.PreprocessorForm);
@@ -73,8 +75,8 @@ async function compute() {
         <div style="display: flex; flex-direction: column; gap: 1rem">
           <div>Представление результатов вычислений</div>
           <n-button tertiary @click="currentTab = 2">Таблицы</n-button>
-          <n-button tertiary>Эпюры</n-button>
           <n-button tertiary @click="currentTab = 3">Графики</n-button>
+          <n-button tertiary @click="currentTab = 4">Эпюры</n-button>
           <postprocessor-select :bars="formBars" :computation="computationResult" style="margin-top: 1rem" />
         </div>
       </template>
@@ -88,6 +90,12 @@ async function compute() {
   />
   <postprocessor-chart
     v-else-if="currentTab === 3"
+    :bars="formBars"
+    :computation="computationResult"
+    @back="currentTab = 0"
+  />
+  <postprocessor-epure
+    v-else-if="currentTab === 4"
     :bars="formBars"
     :computation="computationResult"
     @back="currentTab = 0"
