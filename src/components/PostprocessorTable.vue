@@ -15,14 +15,36 @@ const emit = defineEmits<{
   (e: "back"): void;
 }>();
 
-const storedPointsCount = parseInt(localStorage.getItem("pointsCount") ?? "");
-const pointsCount = ref(storedPointsCount >= 2 && storedPointsCount <= 10 ? storedPointsCount : 2);
+interface StoredOptions {
+  points?: number;
+  max?: boolean;
+}
 
-function updateInputHandle(value: number | null) {
+const getStoredOptions = (): StoredOptions => JSON.parse(localStorage.getItem("tableOptions") ?? "{}");
+const setStoredOptions = (storedOptions: StoredOptions): void => {
+  localStorage.setItem("tableOptions", JSON.stringify(storedOptions));
+};
+
+const storedOptions = getStoredOptions();
+const pointsCount = ref(
+  storedOptions.points !== undefined && storedOptions.points >= 2 && storedOptions.points <= 10
+    ? storedOptions.points
+    : 2
+);
+const maxChecked = ref(storedOptions.max !== undefined ? storedOptions.max : false);
+
+function handleInputUpdate(value: number | null) {
   if (value === null) pointsCount.value = 2;
-  const storedValue = parseInt(localStorage.getItem("pointsCount") ?? "");
-  if (pointsCount.value !== storedValue) {
-    localStorage.setItem("pointsCount", pointsCount.value.toString());
+  const storedOptions = getStoredOptions();
+  if (pointsCount.value !== storedOptions.points) {
+    setStoredOptions({ points: pointsCount.value, max: storedOptions.max });
+  }
+}
+
+function handleCheckboxUpdate(checked: boolean) {
+  const storedOptions = getStoredOptions();
+  if (checked !== storedOptions.max) {
+    setStoredOptions({ points: storedOptions.points, max: checked });
   }
 }
 
@@ -84,8 +106,6 @@ const tableColumns = ref<DataTableColumns<TableData>>([
   },
   { key: "S", title: "[\u03C3]", width: "22.5%" },
 ]);
-
-const maxChecked = ref(false);
 </script>
 
 <template>
@@ -93,7 +113,9 @@ const maxChecked = ref(false);
     <div style="display: flex; justify-content: space-between; gap: 1rem">
       <n-button tertiary @click="emit('back')">Назад</n-button>
       <div style="display: flex; align-items: center; gap: 1rem">
-        <n-checkbox v-model:checked="maxChecked">max|&#963;<sub>x</sub>|</n-checkbox>
+        <n-checkbox v-model:checked="maxChecked" @update:checked="handleCheckboxUpdate">
+          max|&#963;<sub>x</sub>|
+        </n-checkbox>
         <n-input-number
           v-model:value="pointsCount"
           :disabled="maxChecked"
@@ -101,7 +123,7 @@ const maxChecked = ref(false);
           :max="10"
           placeholder=""
           style="max-width: 5rem"
-          @update:value="updateInputHandle"
+          @update:value="handleInputUpdate"
         />
       </div>
     </div>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { NButton, NPagination } from "naive-ui";
 import { AutoScaleAxis, LineChart } from "chartist";
 import "chartist/dist/index.css";
+import { ctLineLabels } from "@/helpers/chartist";
 import { range } from "@/helpers/common";
 import type { ComputationResult } from "@/helpers/processor";
 import type { Bar } from "@/store";
@@ -49,15 +50,24 @@ async function render(index: number) {
     chartRef.value,
     {
       series: [
-        [
-          { x: a, y: Nx(a) },
-          { x: b, y: Nx(b) },
-        ],
-        [
-          { x: a, y: Sx(a) },
-          { x: b, y: Sx(b) },
-        ],
-        range(a, b, 0.5).map((value) => ({ x: value, y: Ux(value) })),
+        {
+          name: "N\u2093",
+          data: [
+            { x: a, y: Nx(a) },
+            { x: b, y: Nx(b) },
+          ],
+        },
+        {
+          name: "\u03C3\u2093",
+          data: [
+            { x: a, y: Sx(a) },
+            { x: b, y: Sx(b) },
+          ],
+        },
+        {
+          name: "U\u2093",
+          data: range(a, b, 0.5).map((value) => ({ x: value, y: Ux(value) })),
+        },
       ],
     },
     {
@@ -66,6 +76,7 @@ async function render(index: number) {
         type: AutoScaleAxis,
         onlyInteger: true,
       },
+      plugins: [ctLineLabels({})],
     }
   );
 }
