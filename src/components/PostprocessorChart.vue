@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { NButton, NPagination, NCheckbox } from "naive-ui";
-import { AutoScaleAxis, Interpolation, LineChart, type SeriesObject } from "chartist";
+import { AutoScaleAxis, LineChart, type SeriesObject } from "chartist";
 import "chartist/dist/index.css";
 import { ctLineLabels } from "@/helpers/chartist";
 import { range } from "@/helpers/common";
@@ -81,7 +81,7 @@ async function render(index: number) {
   if (uxChecked.value) {
     series.push({
       name: "U\u2093",
-      data: range(a, b, 0.01).map((value) => ({ x: value, y: Ux(value) })),
+      data: range(a, b, (b - a) / 100).map((value) => ({ x: value, y: Ux(value) })),
     });
   }
 
@@ -94,7 +94,12 @@ async function render(index: number) {
       showPoint: false,
       axisX: {
         type: AutoScaleAxis,
-        onlyInteger: true,
+        scaleMinSpace: 50,
+      },
+      axisY: {
+        type: AutoScaleAxis,
+        scaleMinSpace: 40,
+        offset: 50,
       },
       plugins: [ctLineLabels({})],
     }

@@ -21,25 +21,25 @@ async function handlePageUpdate(page: number) {
   await render(page - 1);
 }
 
-async function render(n: number) {
+async function render(index: number) {
   if (epureRef.value === null || props.computation === null) return;
 
   const { Nx, Ux, Sx } = props.computation;
 
-  const Fx = n === 0 ? Nx : n === 1 ? Sx : Ux;
+  const Fx = index === 0 ? Nx : index === 1 ? Sx : Ux;
 
   new LineChart(
     epureRef.value,
     {
       series: [
         props.bars
-          .map((bar, index) =>
-            n <= 1
+          .map((bar, i) =>
+            index <= 1
               ? [
-                  { x: bar.start, y: Fx[index](0) },
-                  { x: bar.end, y: Fx[index](bar.length) },
+                  { x: bar.start, y: Fx[i](0) },
+                  { x: bar.end, y: Fx[i](bar.length) },
                 ]
-              : range(bar.start, bar.end, bar.length / 100).map((x) => ({ x: x, y: Fx[index](x - bar.start) }))
+              : range(bar.start, bar.end, bar.length / 100).map((x) => ({ x: x, y: Fx[i](x - bar.start) }))
           )
           .reduce((prev, current) => prev.concat(current), []),
       ],
@@ -64,7 +64,14 @@ onMounted(async () => {
   <div style="display: flex; flex-direction: column; gap: 1rem; flex: auto">
     <div style="display: flex; justify-content: space-between; gap: 1rem">
       <n-button tertiary @click="emit('back')">Назад</n-button>
-      <n-pagination :default-page="1" :page-count="3" @update:page="handlePageUpdate" />
+      <n-pagination :default-page="1" :page-count="3" @update:page="handlePageUpdate">
+        <template #label="value">
+          <span v-if="value.node === 1">N<sub>x</sub></span>
+          <span v-else-if="value.node === 2">&#963;<sub>x</sub></span>
+          <span v-else-if="value.node === 3">U<sub>x</sub></span>
+          <span v-else>{{ value.node }}</span>
+        </template>
+      </n-pagination>
     </div>
     <div ref="epureRef" style="flex: auto"></div>
   </div>

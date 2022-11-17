@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { NDynamicInput, NInputNumber, NForm, NFormItem, type FormItemRule, type FormInst } from "naive-ui";
+import { NDynamicInput, NInputNumber, NForm, NFormItem, NTooltip, type FormItemRule, type FormInst } from "naive-ui";
 import { Bar, Node, type Form, type Xs } from "@/store";
 import PreprocessorStorage from "@/components/PreprocessorStorage.vue";
 
@@ -147,13 +147,18 @@ defineExpose({
           :path="`xr[${index}]`"
           :rule="[requiredRule, xrExistsRule]"
         >
-          <n-input-number
-            v-model:value="formValue.xr[index]"
-            :min="-maxValue"
-            :max="maxValue"
-            :show-button="false"
-            placeholder="x"
-          />
+          <n-tooltip trigger="hover" :delay="300">
+            <template #trigger>
+              <n-input-number
+                v-model:value="formValue.xr[index]"
+                :min="-maxValue"
+                :max="maxValue"
+                :show-button="false"
+                placeholder="x"
+              />
+            </template>
+            x
+          </n-tooltip>
         </n-form-item>
       </template>
     </n-dynamic-input>
@@ -169,7 +174,12 @@ defineExpose({
             :path="`xs[${index}].I`"
             :rule="[requiredRule, xrNumberRule]"
           >
-            <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+              </template>
+              I
+            </n-tooltip>
           </n-form-item>
           <n-form-item
             ignore-path-change
@@ -178,7 +188,12 @@ defineExpose({
             :path="`xs[${index}].J`"
             :rule="[requiredRule, xrNumberRule, xsLengthRule(value)]"
           >
-            <n-input-number v-model:value="value.J" :precision="0" :min="1" placeholder="J" :show-button="false" />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number v-model:value="value.J" :precision="0" :min="1" placeholder="J" :show-button="false" />
+              </template>
+              J
+            </n-tooltip>
           </n-form-item>
           <n-form-item
             ignore-path-change
@@ -187,7 +202,18 @@ defineExpose({
             :path="`xs[${index}].Ig`"
             :rule="[requiredRule, xcNumberRule]"
           >
-            <n-input-number v-model:value="value.Ig" :precision="0" :min="1" placeholder="Ig" :show-button="false" />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.Ig"
+                  :precision="0"
+                  :min="1"
+                  placeholder="Ig"
+                  :show-button="false"
+                />
+              </template>
+              Ig
+            </n-tooltip>
           </n-form-item>
         </div>
       </template>
@@ -198,31 +224,46 @@ defineExpose({
       <template #default="{ value, index }">
         <div style="display: flex; gap: 1rem">
           <n-form-item ignore-path-change :label="`${index + 1}`" :path="`xc[${index}].A`" :rule="requiredRule">
-            <n-input-number
-              v-model:value="value.A"
-              :max="maxValue"
-              :validator="positiveValidator"
-              placeholder="A"
-              :show-button="false"
-            />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.A"
+                  :max="maxValue"
+                  :validator="positiveValidator"
+                  placeholder="A"
+                  :show-button="false"
+                />
+              </template>
+              A
+            </n-tooltip>
           </n-form-item>
           <n-form-item ignore-path-change :show-label="false" :path="`xc[${index}].E`" :rule="requiredRule">
-            <n-input-number
-              v-model:value="value.E"
-              :max="maxValue"
-              :validator="positiveValidator"
-              placeholder="E"
-              :show-button="false"
-            />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.E"
+                  :max="maxValue"
+                  :validator="positiveValidator"
+                  placeholder="E"
+                  :show-button="false"
+                />
+              </template>
+              E
+            </n-tooltip>
           </n-form-item>
           <n-form-item ignore-path-change :show-label="false" :path="`xc[${index}].S`" :rule="requiredRule">
-            <n-input-number
-              v-model:value="value.S"
-              :max="maxValue"
-              :validator="positiveValidator"
-              placeholder="[&#963;]"
-              :show-button="false"
-            />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.S"
+                  :max="maxValue"
+                  :validator="positiveValidator"
+                  placeholder="[&#963;]"
+                  :show-button="false"
+                />
+              </template>
+              [&#963;]
+            </n-tooltip>
           </n-form-item>
         </div>
       </template>
@@ -238,13 +279,18 @@ defineExpose({
           :path="`nb[${index}]`"
           :rule="[requiredRule, xrNumberRule, nbExistsRule]"
         >
-          <n-input-number
-            v-model:value="formValue.nb[index]"
-            :precision="0"
-            :min="1"
-            placeholder="I"
-            :show-button="false"
-          />
+          <n-tooltip trigger="hover" :delay="300">
+            <template #trigger>
+              <n-input-number
+                v-model:value="formValue.nb[index]"
+                :precision="0"
+                :min="1"
+                placeholder="I"
+                :show-button="false"
+              />
+            </template>
+            I
+          </n-tooltip>
         </n-form-item>
       </template>
     </n-dynamic-input>
@@ -260,16 +306,26 @@ defineExpose({
             :path="`qr[${index}].I`"
             :rule="[requiredRule, xrNumberRule, qrExistsRule]"
           >
-            <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+              </template>
+              I
+            </n-tooltip>
           </n-form-item>
           <n-form-item ignore-path-change :show-label="false" :path="`qr[${index}].Fx`" :rule="requiredRule">
-            <n-input-number
-              v-model:value="value.Fx"
-              :min="-maxValue"
-              :max="maxValue"
-              placeholder="F"
-              :show-button="false"
-            />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.Fx"
+                  :min="-maxValue"
+                  :max="maxValue"
+                  placeholder="F"
+                  :show-button="false"
+                />
+              </template>
+              F
+            </n-tooltip>
           </n-form-item>
         </div>
       </template>
@@ -286,16 +342,26 @@ defineExpose({
             :path="`qs[${index}].I`"
             :rule="[requiredRule, xsNumberRule, qsExistsRule]"
           >
-            <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number v-model:value="value.I" :precision="0" :min="1" placeholder="I" :show-button="false" />
+              </template>
+              I
+            </n-tooltip>
           </n-form-item>
           <n-form-item ignore-path-change :show-label="false" :path="`qs[${index}].Qx`" :rule="requiredRule">
-            <n-input-number
-              v-model:value="value.Qx"
-              :min="-maxValue"
-              :max="maxValue"
-              placeholder="q"
-              :show-button="false"
-            />
+            <n-tooltip trigger="hover" :delay="300">
+              <template #trigger>
+                <n-input-number
+                  v-model:value="value.Qx"
+                  :min="-maxValue"
+                  :max="maxValue"
+                  placeholder="q"
+                  :show-button="false"
+                />
+              </template>
+              q
+            </n-tooltip>
           </n-form-item>
         </div>
       </template>

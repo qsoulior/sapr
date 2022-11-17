@@ -60,15 +60,15 @@ const Sx = Fx(props.computation?.Sx);
       <thead>
         <tr>
           <th>N<sub>x</sub></th>
-          <th>U<sub>x</sub></th>
           <th>&#963;<sub>x</sub></th>
+          <th>U<sub>x</sub></th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>{{ Nx }}</td>
-          <td>{{ Ux }}</td>
           <td>{{ Sx }}</td>
+          <td>{{ Ux }}</td>
         </tr>
       </tbody>
     </n-table>
