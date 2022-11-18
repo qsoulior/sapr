@@ -22,7 +22,7 @@ const areas = computed(() => props.bars.map((value) => value.Ig.A));
 const constructionHeight = computed(() => Math.max(...areas.value));
 
 const percentageStep = 5;
-const widthPercentage = ref(50);
+const widthPercentage = ref(100);
 const heightPercentage = ref(25);
 
 const container = ref<HTMLDivElement | null>(null);
@@ -77,8 +77,9 @@ async function arrow(svg: Container, fromX: number, fromY: number, toX: number, 
 }
 
 async function concentratedLoad(svg: Container, x: number, y: number, reversed = false): Promise<G> {
-  const loadLen = immutableWidthRatio.value / 2;
-  const loadWidth = Math.max(immutableWidthRatio.value, immutableHeightRatio.value) / 25;
+  const maxImmutableRatio = Math.max(immutableWidthRatio.value, immutableHeightRatio.value + 20);
+  const loadLen = maxImmutableRatio / 2;
+  const loadWidth = Math.min(immutableWidthRatio.value, immutableHeightRatio.value) / 10;
 
   const [fromX, toX] = reversed ? [x + loadLen, x] : [x, x + loadLen];
   return (await arrow(svg, fromX, y, toX, y)).stroke({ color: reversed ? "blue" : "#f06", width: loadWidth });
@@ -92,8 +93,8 @@ async function distributedLoad(svg: Container, fromX: number, toX: number, y: nu
     reversed = true;
   }
 
-  const loadWidth = immutableHeightRatio.value / 30;
-  const space = Math.floor(immutableWidthRatio.value / 2);
+  const loadWidth = Math.min(immutableWidthRatio.value, immutableHeightRatio.value) / 30;
+  const space = Math.floor(Math.max(immutableWidthRatio.value, immutableHeightRatio.value + 15) / 2);
 
   for (let x = fromX; x + 0.7 * space <= toX; x += space) {
     const [x1, x2] = reversed ? [x + 0.7 * space, x] : [x, x + 0.7 * space];
@@ -111,7 +112,7 @@ async function support(
   color: string
 ): Promise<G> {
   const support = svg.group();
-  const space = immutableHeightRatio.value / 3;
+  const space = Math.min(immutableWidthRatio.value, immutableHeightRatio.value) / 3;
   const head = reversed ? -space : space;
 
   support.line(x, fromY, x, toY);
@@ -132,7 +133,7 @@ async function number(
 ): Promise<G> {
   const group = svg.group();
 
-  const maxImmutableRatio = Math.max(immutableWidthRatio.value, immutableHeightRatio.value);
+  const maxImmutableRatio = Math.max(immutableWidthRatio.value, immutableHeightRatio.value, 60);
 
   const figureSize = maxImmutableRatio / 4;
 
