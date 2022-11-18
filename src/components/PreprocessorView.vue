@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { NButton, NButtonGroup, NIcon } from "naive-ui";
 import { SVG, type G, Container, Box } from "@svgdotjs/svg.js";
 import type { Bar, Node } from "@/store";
+import { debounce } from "@/helpers/common";
 import IconAdd from "@/components/icons/IconAdd.vue";
 import IconRemove from "@/components/icons/IconRemove.vue";
 
@@ -25,19 +26,21 @@ const widthPercentage = ref(50);
 const heightPercentage = ref(25);
 
 const container = ref<HTMLDivElement | null>(null);
+const containerWidth = ref(0);
+const containerHeight = ref(0);
 
-const immutableWidthRatio = computed(() => (container.value ? container.value.clientWidth * 0.06 : 0));
-const immutableHeightRatio = computed(() => (container.value ? container.value.clientHeight * 0.06 : 0));
+const immutableWidthRatio = computed(() => containerWidth.value * 0.06);
+const immutableHeightRatio = computed(() => containerHeight.value * 0.06);
 
 const mutableWidthRatio = computed(() =>
   container.value
-    ? ((container.value.clientWidth - immutableWidthRatio.value * 1.2) / constructionWidth.value) *
+    ? ((containerWidth.value - immutableWidthRatio.value * 1.2) / constructionWidth.value) *
       (widthPercentage.value / 100)
     : 0
 );
 const mutableHeightRatio = computed(() =>
   container.value
-    ? ((container.value.clientHeight - immutableHeightRatio.value * 3) / constructionHeight.value) *
+    ? ((containerHeight.value - immutableHeightRatio.value * 3) / constructionHeight.value) *
       (heightPercentage.value / 100)
     : 0
 );
@@ -206,7 +209,7 @@ async function renderNodes(svg: Container, boxes: Map<number, Box>, padding: num
 async function render() {
   if (container.value === null) return;
   container.value.innerHTML = "";
-  const draw = SVG().addTo(container.value).size(container.value.clientWidth, container.value.clientHeight);
+  const draw = SVG().addTo(container.value).size(containerWidth.value, containerHeight.value);
   const barColor = "#b0b0b0";
   const padding = immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value;
 
@@ -214,8 +217,22 @@ async function render() {
   await renderNodes(draw, boxes, padding, barColor);
 }
 
+const debouncedRender = debounce(render, 100);
+
 onMounted(async () => {
-  await render();
+  if (container.value !== null) {
+    containerWidth.value = container.value.clientWidth;
+    containerHeight.value = container.value.clientHeight;
+    await render();
+
+    const observer = new ResizeObserver(async (entries) => {
+      const entry = entries[0];
+      containerWidth.value = entry.contentRect.width;
+      containerHeight.value = entry.contentRect.height;
+      debouncedRender();
+    });
+    observer.observe(container.value);
+  }
 });
 </script>
 
