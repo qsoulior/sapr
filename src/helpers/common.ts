@@ -4,12 +4,32 @@ export const range = (start = 0, end = 0, step = 1) => {
   return Array.from({ length: (end - start + step) / step }, (_, i) => i * step + start);
 };
 
-export const debounce = (fn: Function, ms = 300) => {
+export function debounce<F extends (...args: any[]) => any>(fn: F, ms = 300) {
   let timeoutId: ReturnType<typeof setTimeout>;
-  return function (this: ThisParameterType<typeof fn>, ...args: any[]) {
-    return new Promise((resolve) => {
+
+  return async function (this: ThisParameterType<F>, ...args: Parameters<F>) {
+    return new Promise<ReturnType<F>>((resolve, reject) => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => resolve(fn.apply(this, args)), ms);
+      timeoutId = setTimeout(() => {
+        try {
+          const result = fn.apply(this, args);
+          resolve(result);
+        } catch (e) {
+          reject(e);
+        }
+      }, ms);
     });
   };
-};
+}
+
+export async function saveFile(data: BlobPart[], type: string, fileName: string): Promise<void> {
+  const blob = new Blob(data, { type: type });
+  const anchor = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}

@@ -49,7 +49,7 @@ async function increaseSize({ widthFactor = percentageStep, heightFactor = perce
   if (widthPercentage.value + widthFactor <= 100 && heightPercentage.value + heightFactor <= 100) {
     widthPercentage.value += widthFactor;
     heightPercentage.value += heightFactor;
-    await render();
+    await render(barColor);
   }
 }
 
@@ -57,7 +57,7 @@ async function decreaseSize({ widthFactor = percentageStep, heightFactor = perce
   if (widthPercentage.value > 5 * widthFactor && heightPercentage.value > 2 * heightFactor) {
     widthPercentage.value -= widthFactor;
     heightPercentage.value -= heightFactor;
-    await render();
+    await render(barColor);
   }
 }
 
@@ -207,15 +207,17 @@ async function renderNodes(svg: Container, boxes: Map<number, Box>, padding: num
   }
 }
 
-async function render() {
-  if (container.value === null) return;
+const barColor = "#b0b0b0";
+
+async function render(barColor: string) {
+  if (container.value === null) return null;
   container.value.innerHTML = "";
   const draw = SVG().addTo(container.value).size(containerWidth.value, containerHeight.value);
-  const barColor = "#b0b0b0";
   const padding = immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value;
 
   const boxes = await renderBars(draw, padding, barColor);
   await renderNodes(draw, boxes, padding, barColor);
+  return draw;
 }
 
 const debouncedRender = debounce(render, 100);
@@ -224,13 +226,13 @@ onMounted(async () => {
   if (container.value !== null) {
     containerWidth.value = container.value.clientWidth;
     containerHeight.value = container.value.clientHeight;
-    await render();
+    await render(barColor);
 
     const observer = new ResizeObserver(async (entries) => {
       const entry = entries[0];
       containerWidth.value = entry.contentRect.width;
       containerHeight.value = entry.contentRect.height;
-      debouncedRender();
+      debouncedRender(barColor);
     });
     observer.observe(container.value);
   }

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { NButton, NUpload, type UploadCustomRequestOptions, type UploadFileInfo, type UploadInst } from "naive-ui";
 import type { Form } from "@/store";
+import { saveFile } from "@/helpers/common";
 
 const props = defineProps<{
   form: Form;
@@ -45,16 +46,9 @@ async function clearLocal(): Promise<void> {
   localStorage.removeItem("form");
 }
 
-async function saveFile(): Promise<void> {
-  const blob = new Blob([JSON.stringify(formValue.value)], { type: "application/json" });
-  const anchor = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  anchor.href = url;
-  anchor.download = "form.json";
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+async function saveForm() {
+  const data = [JSON.stringify(formValue.value)];
+  await saveFile(data, "application/json", "form.json");
 }
 
 const uploadRef = ref<UploadInst | null>(null);
@@ -118,7 +112,7 @@ defineExpose({
 
 <template>
   <div style="display: flex; gap: 1rem">
-    <n-button tertiary @click="saveFile">Сохранить файл</n-button>
+    <n-button tertiary @click="saveForm">Сохранить файл</n-button>
     <n-upload
       ref="uploadRef"
       accept="application/json"
