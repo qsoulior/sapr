@@ -9,6 +9,7 @@ import PostprocessorTable from "@/components/PostprocessorTable.vue";
 import PostprocessorChart from "@/components/PostprocessorChart.vue";
 import PostprocessorEpure from "@/components/PostprocessorEpure.vue";
 import { computeComponents, type ComputationResult } from "@/helpers/processor";
+import { generatePdf } from "@/helpers/pdf";
 
 const message = useMessage();
 
@@ -25,15 +26,15 @@ const showModal = ref(false);
 
 const formRef = ref<InstanceType<typeof PreprocessorForm> | null>(null);
 
-const formNodes = ref<Node[]>([]);
-const formBars = ref<Bar[]>([]);
+const nodes = ref<Node[]>([]);
+const bars = ref<Bar[]>([]);
 
 async function validate(): Promise<boolean> {
   if (formRef.value === null) return false;
   try {
     const result = await formRef.value.validate();
-    formNodes.value = result.nodes;
-    formBars.value = result.bars;
+    nodes.value = result.nodes;
+    bars.value = result.bars;
     return true;
   } catch (error) {
     if (error instanceof Error) {
@@ -53,15 +54,21 @@ const computationResult = ref<ComputationResult | null>(null);
 async function compute() {
   const isValid = await validate();
   if (isValid) {
-    const result = await computeComponents(formNodes.value, formBars.value);
+    const result = await computeComponents(nodes.value, bars.value);
     computationResult.value = result;
     showModal.value = true;
   }
 }
+
+async function createPdf() {
+  if (computationResult.value === null) return;
+  const pdf = await generatePdf(nodes.value, bars.value, computationResult.value);
+  pdf.open();
+}
 </script>
 
 <template>
-  <preprocessor-view v-if="currentTab === 1" :nodes="formNodes" :bars="formBars" @back="currentTab = 0" />
+  <preprocessor-view v-if="currentTab === 1" :nodes="nodes" :bars="bars" @back="currentTab = 0" />
   <div v-else-if="currentTab === 0" style="display: flex; flex-direction: column; gap: 1rem">
     <preprocessor-form ref="formRef" />
     <div style="display: flex; gap: 1rem">
@@ -77,26 +84,27 @@ async function compute() {
           <n-button tertiary @click="currentTab = 2">Таблицы</n-button>
           <n-button tertiary @click="currentTab = 3">Графики</n-button>
           <n-button tertiary @click="currentTab = 4">Эпюры</n-button>
-          <postprocessor-select :bars="formBars" :computation="computationResult" style="margin-top: 1rem" />
+          <postprocessor-select :bars="bars" :computation="computationResult" style="margin-top: 1rem" />
+          <n-button tertiary @click="createPdf">Выгрузить отчет</n-button>
         </div>
       </template>
     </n-modal>
   </div>
   <postprocessor-table
     v-else-if="currentTab === 2"
-    :bars="formBars"
+    :bars="bars"
     :computation="computationResult"
     @back="currentTab = 0"
   />
   <postprocessor-chart
     v-else-if="currentTab === 3"
-    :bars="formBars"
+    :bars="bars"
     :computation="computationResult"
     @back="currentTab = 0"
   />
   <postprocessor-epure
     v-else-if="currentTab === 4"
-    :bars="formBars"
+    :bars="bars"
     :computation="computationResult"
     @back="currentTab = 0"
   />

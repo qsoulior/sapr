@@ -83,10 +83,10 @@ const tableData = computed<TableData[]>(() => {
     for (const x of points) {
       data.push({
         x: round(x, 2),
-        Nx: round(bar.Nx(x), 8),
-        Ux: round(bar.Ux(x), 8),
-        Sx: round(bar.Sx(x), 8),
-        S: round(bar.S, 8),
+        Nx: round(bar.Nx(x), 2),
+        Ux: round(bar.Ux(x), 2),
+        Sx: round(bar.Sx(x), 2),
+        S: round(bar.S, 2),
       });
     }
   }
@@ -102,10 +102,18 @@ const tableColumns = ref<DataTableColumns<TableData>>([
     title: () => ["\u03C3", h("sub", "x")],
     width: "22.5%",
     render: (rowData) =>
-      h(NText, { type: Math.abs(rowData.Sx) > rowData.S ? "error" : "default" }, { default: () => rowData.Sx }),
+      h(
+        NText,
+        { type: Math.abs(rowData.Sx) > rowData.S ? "error" : "default" },
+        { default: () => rowData.Sx.toFixed(2) }
+      ),
   },
   { key: "S", title: "[\u03C3]", width: "22.5%" },
 ]);
+
+function renderCell(value: number) {
+  return value.toFixed(2);
+}
 </script>
 
 <template>
@@ -131,6 +139,7 @@ const tableColumns = ref<DataTableColumns<TableData>>([
       :columns="tableColumns"
       :data="tableData"
       :single-line="false"
+      :render-cell="renderCell"
       :pagination="{ pageSize: maxChecked ? 1 : pointsCount }"
     />
   </div>
