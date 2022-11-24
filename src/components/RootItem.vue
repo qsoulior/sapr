@@ -10,6 +10,7 @@ import PostprocessorChart from "@/components/PostprocessorChart.vue";
 import PostprocessorEpure from "@/components/PostprocessorEpure.vue";
 import { computeComponents, type ComputationResult } from "@/helpers/processor";
 import { generatePdf } from "@/helpers/pdf";
+import { saveFile } from "@/helpers/common";
 
 const message = useMessage();
 
@@ -60,10 +61,16 @@ async function compute() {
   }
 }
 
+const isLoading = ref(false);
+
 async function createPdf() {
   if (computationResult.value === null) return;
+  isLoading.value = true;
   const pdf = await generatePdf(nodes.value, bars.value, computationResult.value);
-  pdf.open();
+  pdf.getBlob(async (result) => {
+    await saveFile([result], "application/pdf", "report.pdf");
+    isLoading.value = false;
+  });
 }
 </script>
 
@@ -86,7 +93,7 @@ async function createPdf() {
           <n-button tertiary @click="currentTab = 4">Эпюры</n-button>
           <postprocessor-select :bars="bars" :computation="computationResult" style="margin-top: 1rem" />
           <div style="margin-top: 1rem">Экспорт результатов вычислений</div>
-          <n-button tertiary @click="createPdf">Сгенерировать отчет</n-button>
+          <n-button tertiary @click="createPdf" :loading="isLoading">Сгенерировать отчет</n-button>
         </div>
       </template>
     </n-modal>

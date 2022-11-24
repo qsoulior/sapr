@@ -154,7 +154,7 @@ export async function generatePdf(nodes: Node[], bars: Bar[], computation: Compu
   const content: Content = [];
 
   content.push({
-    text: "Отчет по вычислениям компонент напряженно-деформированного состояния конструкции",
+    text: "Отчет по вычислению компонент напряженно-деформированного состояния конструкции",
     alignment: "center",
     bold: true,
     marginBottom: 30,
@@ -223,15 +223,13 @@ export async function generatePdf(nodes: Node[], bars: Bar[], computation: Compu
 
   const doc: TDocumentDefinitions = {
     info: {
-      title: "Отчет по вычислениям",
+      title: "Отчет по вычислению",
     },
     pageSize: "A4",
     content: content,
   };
 
-  const pdfMake = (await import("pdfmake/build/pdfmake.min")).default;
-  const pdfFonts = await import("pdfmake/build/vfs_fonts");
-  pdfMake.vfs = pdfFonts.pdfMake.vfs;
+  const createPdf = (await import("@/helpers/pdfSetup")).default;
 
-  return pdfMake.createPdf(doc);
+  return createPdf(doc);
 }
