@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { NButton, NButtonGroup, NIcon } from "naive-ui";
 import type { Bar, Node } from "@/store";
 import { debounce } from "@/helpers/common";
-import { render } from "@/helpers/render";
+import { renderConstruction } from "@/helpers/render";
 import IconAdd from "@/components/icons/IconAdd.vue";
 import IconRemove from "@/components/icons/IconRemove.vue";
 
@@ -49,7 +49,7 @@ async function increaseSize({ widthFactor = percentageStep, heightFactor = perce
   if (widthPercentage.value + widthFactor <= 100 && heightPercentage.value + heightFactor <= 100) {
     widthPercentage.value += widthFactor;
     heightPercentage.value += heightFactor;
-    await renderConstruction();
+    await render();
   }
 }
 
@@ -57,15 +57,15 @@ async function decreaseSize({ widthFactor = percentageStep, heightFactor = perce
   if (widthPercentage.value > 5 * widthFactor && heightPercentage.value > 2 * heightFactor) {
     widthPercentage.value -= widthFactor;
     heightPercentage.value -= heightFactor;
-    await renderConstruction();
+    await render();
   }
 }
 
 const padding = computed(() => immutableWidthRatio.value / 2 - Math.min(...xr.value) * mutableWidthRatio.value);
 
-async function renderConstruction() {
+async function render() {
   if (container.value === null) return;
-  const svg = await render(props.nodes, props.bars, {
+  const svg = await renderConstruction(props.nodes, props.bars, {
     width: containerWidth.value,
     height: containerHeight.value,
     barWidthRatio: mutableWidthRatio.value,
@@ -78,13 +78,13 @@ async function renderConstruction() {
   container.value.innerHTML = svg?.svg() ?? "";
 }
 
-const debouncedRender = debounce(renderConstruction, 100);
+const debouncedRender = debounce(render, 100);
 
 onMounted(async () => {
   if (container.value !== null) {
     containerWidth.value = container.value.clientWidth;
     containerHeight.value = container.value.clientHeight;
-    await renderConstruction();
+    await render();
 
     const observer = new ResizeObserver(async (entries) => {
       const entry = entries[0];

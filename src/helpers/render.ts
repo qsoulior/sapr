@@ -1,7 +1,10 @@
+import { AutoScaleAxis, LineChart } from "chartist";
 import type { Node, Bar } from "@/store";
 import { SVG, type Box, type Container, type G, type Svg } from "@svgdotjs/svg.js";
+import type { ComputationResult } from "@/helpers/processor";
+import { range } from "@/helpers/common";
 
-interface RenderOptions {
+interface ConstructionOptions {
   width: number;
   height: number;
   barWidthRatio: number;
@@ -27,7 +30,11 @@ async function arrow(svg: Container, fromX: number, fromY: number, toX: number, 
   return arrow;
 }
 
-export async function render(nodes: Node[], bars: Bar[], options: RenderOptions): Promise<Svg | null> {
+export async function renderConstruction(
+  nodes: Node[],
+  bars: Bar[],
+  options: ConstructionOptions
+): Promise<Svg | null> {
   const svg = SVG().size(options.width, options.height);
 
   async function concentratedLoad(x: number, y: number, reversed = false): Promise<G> {
@@ -150,4 +157,45 @@ export async function render(nodes: Node[], bars: Bar[], options: RenderOptions)
   const boxes = await renderBars(options.barColor);
   await renderNodes(boxes, options.barColor);
   return svg;
+}
+
+interface EpureOptions {
+  el: Element;
+}
+
+export async function renderEpure(bars: Bar[], computation: ComputationResult, index: number, options: EpureOptions) {
+  const { Nx, Ux, Sx } = computation;
+  const Fx = index === 0 ? Nx : index === 1 ? Sx : Ux;
+
+  const chart = new LineChart(
+    options.el,
+    {
+      series: [
+        bars
+          .map((bar, i) =>
+            index <= 1
+              ? [
+                  { x: bar.start, y: Fx[i](0) },
+                  { x: bar.end, y: Fx[i](bar.length) },
+                ]
+              : range(bar.start, bar.end, bar.length / 100).map((x) => ({ x: x, y: Fx[i](x - bar.start) }))
+          )
+          .reduce((prev, current) => prev.concat(current), []),
+      ],
+    },
+    {
+      showArea: true,
+      showPoint: false,
+      axisX: {
+        type: AutoScaleAxis,
+        onlyInteger: true,
+      },
+    }
+  );
+
+  chart.initialize();
+  const svgElement = <SVGElement>options.el.firstElementChild;
+  if (svgElement === null) return null;
+
+  return SVG(svgElement);
 }

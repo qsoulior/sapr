@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { NButton, NPagination } from "naive-ui";
-import { AutoScaleAxis, LineChart } from "chartist";
 import type { ComputationResult } from "@/helpers/processor";
 import type { Bar } from "@/store";
-import { range } from "@/helpers/common";
+import { renderEpure } from "@/helpers/render";
 
 const props = defineProps<{
   bars: Bar[];
@@ -24,35 +23,9 @@ async function handlePageUpdate(page: number) {
 async function render(index: number) {
   if (epureRef.value === null || props.computation === null) return;
 
-  const { Nx, Ux, Sx } = props.computation;
-
-  const Fx = index === 0 ? Nx : index === 1 ? Sx : Ux;
-
-  new LineChart(
-    epureRef.value,
-    {
-      series: [
-        props.bars
-          .map((bar, i) =>
-            index <= 1
-              ? [
-                  { x: bar.start, y: Fx[i](0) },
-                  { x: bar.end, y: Fx[i](bar.length) },
-                ]
-              : range(bar.start, bar.end, bar.length / 100).map((x) => ({ x: x, y: Fx[i](x - bar.start) }))
-          )
-          .reduce((prev, current) => prev.concat(current), []),
-      ],
-    },
-    {
-      showArea: true,
-      showPoint: false,
-      axisX: {
-        type: AutoScaleAxis,
-        onlyInteger: true,
-      },
-    }
-  );
+  await renderEpure(props.bars, props.computation, index, {
+    el: epureRef.value,
+  });
 }
 
 onMounted(async () => {
