@@ -85,7 +85,8 @@ async function createPdf() {
           <n-button tertiary @click="currentTab = 3">Графики</n-button>
           <n-button tertiary @click="currentTab = 4">Эпюры</n-button>
           <postprocessor-select :bars="bars" :computation="computationResult" style="margin-top: 1rem" />
-          <n-button tertiary @click="createPdf">Выгрузить отчет</n-button>
+          <div style="margin-top: 1rem">Экспорт результатов вычислений</div>
+          <n-button tertiary @click="createPdf">Сгенерировать отчет</n-button>
         </div>
       </template>
     </n-modal>
