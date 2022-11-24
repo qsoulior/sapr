@@ -231,7 +231,7 @@ export async function generatePdf(nodes: Node[], bars: Bar[], computation: Compu
 
   const pdfMake = (await import("pdfmake/build/pdfmake.min")).default;
   const pdfFonts = await import("pdfmake/build/vfs_fonts");
-  (<any>pdfMake).vfs = pdfFonts.pdfMake.vfs;
+  pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
   return pdfMake.createPdf(doc);
 }
