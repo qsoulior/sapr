@@ -1,4 +1,3 @@
-import { lusolve, number, isComplex } from "mathjs";
 import type { Bar, Node } from "@/store";
 
 export type NumberFunction = (x: number) => number;
@@ -43,6 +42,8 @@ export async function computeComponents(nodes: Node[], bars: Bar[]): Promise<Com
   for (let i = 0; i < b.length; i++) {
     if (nodes[i].Nb) b[i] = 0;
   }
+
+  const { lusolve, number, isComplex } = await import("mathjs");
 
   const d = lusolve(A, b)
     .map((value) => (Array.isArray(value) ? value[0] : value))

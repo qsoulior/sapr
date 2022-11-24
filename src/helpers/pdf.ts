@@ -1,14 +1,10 @@
 import { round } from "mathjs";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
 import type { Content, Table, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
 import type { Bar, Node } from "@/store";
 import type { ComputationResult } from "@/helpers/processor";
 import { range } from "@/helpers/common";
 import { renderConstruction, renderEpure } from "@/helpers/render";
 import { type Element, Text, type Svg } from "@svgdotjs/svg.js";
-
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 async function generateData(nodes: Node[], bars: Bar[]): Promise<Table[]> {
   const sortedNodes = [...nodes].sort((a, b) => parseInt(a.label) - parseInt(b.label));
@@ -232,5 +228,10 @@ export async function generatePdf(nodes: Node[], bars: Bar[], computation: Compu
     pageSize: "A4",
     content: content,
   };
+
+  const pdfMake = (await import("pdfmake/build/pdfmake.min")).default;
+  const pdfFonts = await import("pdfmake/build/vfs_fonts");
+  (<any>pdfMake).vfs = pdfFonts.pdfMake.vfs;
+
   return pdfMake.createPdf(doc);
 }

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from "vue";
 import { NButton, NPagination, NCheckbox } from "naive-ui";
 import { AutoScaleAxis, LineChart, type SeriesObject } from "chartist";
-import "chartist/dist/index.css";
 import { ctLineLabels } from "@/helpers/chartist";
 import { range } from "@/helpers/common";
 import type { ComputationResult } from "@/helpers/processor";
@@ -127,13 +126,3 @@ onMounted(async () => {
     <div ref="chartRef" style="flex: auto"></div>
   </div>
 </template>
-
-<style>
-.ct-label {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.ct-grid {
-  stroke: rgba(255, 255, 255, 0.5);
-}
-</style>

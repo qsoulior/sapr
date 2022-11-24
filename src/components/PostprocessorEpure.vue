@@ -49,9 +49,3 @@ onMounted(async () => {
     <div ref="epureRef" style="flex: auto"></div>
   </div>
 </template>
-
-<style>
-.ct-area {
-  fill-opacity: 0.35;
-}
-</style>

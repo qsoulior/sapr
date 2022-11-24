@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { NConfigProvider, NGlobalStyle, NMessageProvider, NLayout, darkTheme } from "naive-ui";
-
 import RootItem from "@/components/RootItem.vue";
 </script>
 
@@ -15,4 +14,19 @@ import RootItem from "@/components/RootItem.vue";
   </n-config-provider>
 </template>
 
-<style scoped></style>
+<style>
+@import "vfonts/OpenSans.css";
+@import "chartist/dist/index.css";
+
+.ct-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ct-grid {
+  stroke: rgba(255, 255, 255, 0.5);
+}
+
+.ct-area {
+  fill-opacity: 0.35;
+}
+</style>
