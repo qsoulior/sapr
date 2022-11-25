@@ -1,3 +1,4 @@
+import "chartist/dist/index.css";
 import { AutoScaleAxis, LineChart } from "chartist";
 import type { Node, Bar } from "@/store";
 import { SVG, type Box, type Container, type G, type Svg } from "@svgdotjs/svg.js";

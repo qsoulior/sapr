@@ -95,12 +95,11 @@ const tableData = computed<TableData[]>(() => {
 
 const tableColumns = ref<DataTableColumns<TableData>>([
   { key: "x", title: "x" },
-  { key: "Nx", title: () => ["N", h("sub", "x")], width: "22.5%" },
-  { key: "Ux", title: () => ["U", h("sub", "x")], width: "22.5%" },
+  { key: "Nx", title: () => ["N", h("sub", "x")] },
+  { key: "Ux", title: () => ["U", h("sub", "x")] },
   {
     key: "Sx",
     title: () => ["\u03C3", h("sub", "x")],
-    width: "22.5%",
     render: (rowData) =>
       h(
         NText,
@@ -108,7 +107,7 @@ const tableColumns = ref<DataTableColumns<TableData>>([
         { default: () => rowData.Sx.toFixed(2) }
       ),
   },
-  { key: "S", title: "[\u03C3]", width: "22.5%" },
+  { key: "S", title: "[\u03C3]" },
 ]);
 
 function renderCell(value: number) {

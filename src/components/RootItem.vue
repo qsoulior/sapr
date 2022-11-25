@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useMessage, NButton, NModal } from "naive-ui";
+import { useMessage, NButton, NModal, NPopconfirm } from "naive-ui";
 import type { Bar, Node } from "@/store";
 import PreprocessorView from "@/components/PreprocessorView.vue";
 import PreprocessorForm from "@/components/PreprocessorForm.vue";
@@ -72,16 +72,32 @@ async function createPdf() {
     isLoading.value = false;
   });
 }
+
+const showConfirm = ref(false);
+
+async function clearForm() {
+  await formRef.value?.clear();
+  showConfirm.value = false;
+}
 </script>
 
 <template>
   <preprocessor-view v-if="currentTab === 1" :nodes="nodes" :bars="bars" @back="currentTab = 0" />
-  <div v-else-if="currentTab === 0" style="display: flex; flex-direction: column; gap: 1rem">
+  <div v-else-if="currentTab === 0" style="display: flex; flex-direction: column; gap: 1rem; width: fit-content">
     <preprocessor-form ref="formRef" />
-    <div style="display: flex; gap: 1rem">
-      <n-button tertiary @click="render">Отрисовать стержневую систему</n-button>
-      <n-button tertiary @click="compute">Выполнить вычисления</n-button>
-      <n-button tertiary @click="formRef?.clear">Очистить</n-button>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem">
+      <n-button style="flex: auto" tertiary @click="render">Отрисовать стержневую систему</n-button>
+      <n-button style="flex: auto" tertiary @click="compute">Выполнить вычисления</n-button>
+      <n-popconfirm v-model:show="showConfirm" positive-text="Да" negative-text="Нет">
+        <template #trigger>
+          <n-button style="flex: auto" tertiary>Очистить</n-button>
+        </template>
+        <template #action>
+          <n-button tertiary type="error" size="small" @click="clearForm">Да</n-button>
+          <n-button tertiary size="small" @click="showConfirm = false">Нет</n-button>
+        </template>
+        <template #default> Вы уверены, что хотите очистить данные? </template>
+      </n-popconfirm>
     </div>
     <n-modal v-model:show="showModal" preset="card" style="width: 30rem" :auto-focus="false">
       <template #header> Выберите операцию </template>

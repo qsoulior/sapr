@@ -114,7 +114,7 @@ onMounted(async () => {
   <div style="display: flex; flex-direction: column; gap: 1rem; flex: auto">
     <div style="display: flex; justify-content: space-between; gap: 1rem">
       <n-button tertiary @click="emit('back')">Назад</n-button>
-      <div style="display: flex; align-items: center; gap: 1rem">
+      <div style="display: flex; align-items: center; justify-content: end; gap: 1rem; flex-wrap: wrap-reverse">
         <div style="display: flex; align-items: center; gap: 0.5rem">
           <n-checkbox v-model:checked="nxChecked" @update:checked="handleCheckboxUpdate">N<sub>x</sub></n-checkbox>
           <n-checkbox v-model:checked="sxChecked" @update:checked="handleCheckboxUpdate">&#963;<sub>x</sub></n-checkbox>

@@ -15,9 +15,6 @@ import RootItem from "@/components/RootItem.vue";
 </template>
 
 <style>
-@import "vfonts/OpenSans.css";
-@import "chartist/dist/index.css";
-
 .ct-label {
   color: rgba(255, 255, 255, 0.5);
 }
